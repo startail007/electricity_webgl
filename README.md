@@ -1,4 +1,4 @@
-##### [原先的 canvas](https://virtools.github.io/electricity/demo3/) {:target="\_blank"}
+##### [原先的 canvas](https://virtools.github.io/electricity/demo3/) {:target="_blank"}
 
 ##### 前提：將之前自己製作的 canvas 使用 webgl 來實現
 
