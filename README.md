@@ -1,6 +1,6 @@
 ##### [原先的 canvas](https://virtools.github.io/electricity/demo3/)
 
-##### 前提：將之前自己製作的 canvas 使用 webgl 來實現
+##### 前提：將之前自己製作的 canvas 使用 webgl 逐步來實現
 
 ### [1.base](https://virtools.github.io/electricity_webgl/dist/1.base/)
 
