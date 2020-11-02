@@ -88,9 +88,9 @@ module.exports = {
           {
             loader: "file-loader",
             options: {
-              name: "img/[name].[hash].[ext]",
-              /*publicPath: "../",*/
-              /*outputPath: "/",*/
+              name: "[name].[hash].[ext]",
+              outputPath: "img/",
+              publicPath: "../img",
             },
           },
         ],
