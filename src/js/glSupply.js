@@ -155,11 +155,25 @@ const loadTexture = (gl, url) => {
 };
 const setFramebuffer = (gl, fbo, width, height) => {
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-  gl.viewport(0, 0, width, height);
+  if (width == undefined && height == undefined) {
+    gl.viewport(0, 0, width, height);
+  }
 };
 
-const useFramebufferTexture = (gl, framebufferTexture) => {
-  setFramebuffer(gl, framebufferTexture.framebuffer, framebufferTexture.width, framebufferTexture.height);
+const useFramebufferTexture = (gl, framebufferTexture, resize = true) => {
+  if (framebufferTexture) {
+    if (resize) {
+      setFramebuffer(gl, framebufferTexture.framebuffer, framebufferTexture.width, framebufferTexture.height);
+    } else {
+      setFramebuffer(gl, framebufferTexture.framebuffer);
+    }
+  } else {
+    if (resize) {
+      setFramebuffer(gl, null, gl.canvas.width, gl.canvas.height);
+    } else {
+      setFramebuffer(gl, null);
+    }
+  }
 };
 const createFramebufferTexture = (gl, width, height) => {
   const obj = {
@@ -188,7 +202,85 @@ const createFramebufferTextures = (gl, n, width, height) => {
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   return framebufferTextures;
 };
+
+const attribFuns = {
+  attribFloat(gl, shaderProgram, name, count) {
+    const i = gl.getAttribLocation(shaderProgram, name);
+    gl.enableVertexAttribArray(i);
+    return (val) => {
+      gl.bindBuffer(gl.ARRAY_BUFFER, val);
+      gl.vertexAttribPointer(i, count, gl.FLOAT, false, 0, 0);
+    };
+  },
+};
+const uniformFuns = {
+  uniform1f(gl, shaderProgram, name) {
+    const i = gl.getUniformLocation(shaderProgram, name);
+    return (val) => {
+      gl.uniform1f(i, val);
+    };
+  },
+  uniform2fv(gl, shaderProgram, name) {
+    const i = gl.getUniformLocation(shaderProgram, name);
+    return (val) => {
+      gl.uniform2fv(i, val);
+    };
+  },
+  uniform3fv(gl, shaderProgram, name) {
+    const i = gl.getUniformLocation(shaderProgram, name);
+    return (val) => {
+      gl.uniform3fv(i, val);
+    };
+  },
+  uniformTexture(gl, shaderProgram, name, index) {
+    const i = gl.getUniformLocation(shaderProgram, name);
+    return (val) => {
+      //貼圖
+      gl.activeTexture(gl.TEXTURE0 + index);
+      gl.bindTexture(gl.TEXTURE_2D, val);
+      gl.uniform1i(i, index);
+    };
+  },
+  uniform1i(gl, shaderProgram, name) {
+    const i = gl.getUniformLocation(shaderProgram, name);
+    return (val) => {
+      gl.uniform1i(i, val);
+    };
+  },
+};
+const shaderProgramFun = (gl, shader, vs, fs, drawFun) => {
+  const programInfo = shader(gl, vs, fs);
+  return {
+    programInfo: programInfo,
+
+    use(gl) {
+      gl.useProgram(programInfo.program);
+    },
+    attribSet(vals) {
+      for (let key in vals) {
+        if (programInfo.attribLocations[key]) {
+          programInfo.attribLocations[key](vals[key]);
+        }
+      }
+    },
+    uniformSet(vals) {
+      for (let key in vals) {
+        if (programInfo.uniformLocations[key]) {
+          programInfo.uniformLocations[key](vals[key]);
+        }
+      }
+    },
+    useTexture(gl, texture, clear = true) {
+      useFramebufferTexture(gl, texture);
+      if (clear) {
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+      }
+    },
+  };
+};
 export {
+  shaderProgramFun,
   initShaderProgram,
   loadShader,
   setFramebuffer,
@@ -200,4 +292,6 @@ export {
   elementArrayBufferData,
   createAndSetupTexture,
   loadTexture,
+  attribFuns,
+  uniformFuns,
 };

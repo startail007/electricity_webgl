@@ -24,4 +24,12 @@
 
 ### [6.wave](https://virtools.github.io/electricity_webgl/dist/6.wave/)
 
-##### 加入時間讓 shader 可以呈現波動效果
+##### 做出 wave 計算出 normal 在進行折射，在加入時間讓畫面呈現波動效果
+
+### [7.noise](https://virtools.github.io/electricity_webgl/dist/7.noise/)
+
+##### 各種 noise 呈現，與其他創作
+
+### [8.noiseElectricity](https://virtools.github.io/electricity_webgl/dist/8.noiseElectricity/)
+
+##### 使用 noise 讓直線扭曲呈現電流效果

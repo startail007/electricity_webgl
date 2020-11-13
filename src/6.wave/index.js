@@ -1,62 +1,58 @@
-import {
-  initShaderProgram,
-  createFramebufferTextures,
-  arrayBufferData,
-  elementArrayBufferData,
-  loadTexture,
-} from "../js/glSupply";
+import { arrayBufferData, elementArrayBufferData, loadTexture, createFramebufferTexture } from "../js/glSupply";
+import { Vector, VectorE } from "../js/vector";
 import { Point, PointE } from "../js/point";
 import image from "./image.jpg";
+import waveShader from "../js/shader/waveShader";
+import normalShader from "../js/shader/normalShader";
+import refractShader from "../js/shader/refractShader";
+import viewShader from "../js/shader/viewShader";
+
 main();
-function waveShader(gl, vs, fs) {
-  const shaderProgram = initShaderProgram(gl, vs, fs);
-  const programInfo = {
-    program: shaderProgram,
-    attribLocations: {
-      vertexPosition: (() => {
-        const i = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-        gl.enableVertexAttribArray(i);
-        return (val) => {
-          //頂點
-          gl.bindBuffer(gl.ARRAY_BUFFER, val);
-          gl.vertexAttribPointer(i, 2, gl.FLOAT, false, 0, 0);
-        };
-      })(),
-      textureCoord: (() => {
-        const i = gl.getAttribLocation(shaderProgram, "aTextureCoord");
-        gl.enableVertexAttribArray(i);
-        return (val) => {
-          //貼圖UV座標
-          gl.bindBuffer(gl.ARRAY_BUFFER, val);
-          gl.vertexAttribPointer(i, 2, gl.FLOAT, false, 0, 0);
-        };
-      })(),
-    },
-    uniformLocations: {
-      flipY: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uFlipY");
-        return (val) => {
-          //翻轉水平
-          gl.uniform1f(i, val);
-        };
-      })(),
-      time: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uTime");
-        return (val) => {
-          //時間
-          gl.uniform1f(i, val);
-        };
-      })(),
-      size: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uSize");
-        return (val) => {
-          //顯示畫面大小
-          gl.uniform2fv(i, val);
-        };
-      })(),
-    },
-  };
-  return programInfo;
+main0();
+function main0() {
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  ctx.lineWidth = 1;
+  const r = 40;
+  const len = 400;
+
+  ctx.strokeStyle = "#ff0000";
+  ctx.beginPath();
+  for (let i = 0; i < 800; i++) {
+    const angle = (i / len) * 2 * Math.PI + 0.5 * Math.PI;
+    const vector = [Math.cos(angle), Math.sin(angle)];
+    VectorE.scale(vector, r);
+    const point = Point.addVector([i, 100], vector);
+    if (i === 0) {
+      ctx.moveTo(...point);
+    } else {
+      ctx.lineTo(...point);
+    }
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = "#000000";
+  ctx.beginPath();
+  for (let i = 0; i < 800; i++) {
+    const angle = (i / len) * 2 * Math.PI + 0.5 * Math.PI;
+    //const point = Point.addVector([i, 100], [0, -r + r * Math.exp(Math.pow(Math.abs(Math.sin(-0.5 * angle)), 2.5))]);
+    const point = Point.addVector(
+      [i, 100],
+      [0, -r + r * 2 * Math.pow(Math.exp(2 * Math.sin(angle)) / Math.exp(2), 0.75)]
+    );
+    if (i === 0) {
+      ctx.moveTo(...point);
+    } else {
+      ctx.lineTo(...point);
+    }
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = "#0000ff";
+  ctx.beginPath();
+  ctx.moveTo(0, 100);
+  ctx.lineTo(800, 100);
+  ctx.stroke();
 }
 
 function faceBuffers(gl) {
@@ -78,8 +74,8 @@ function faceBuffers(gl) {
 
   //ELEMENT_ARRAY_BUFFER
   const indices = [
-    [0, 1, 3],
-    [1, 2, 3],
+    [2, 0, 1],
+    [3, 2, 0],
   ].flat();
   const indicesBufferData = elementArrayBufferData(gl, indices);
 
@@ -92,28 +88,38 @@ function faceBuffers(gl) {
 
 function main() {
   const canvas = document.querySelector("#glcanvas");
-  const gl = canvas.getContext("webgl");
+  const gl = canvas.getContext("webgl", {
+    //premultipliedAlpha: false,
+    alpha: false,
+  });
   if (!gl) {
     alert("無法初始化WebGL。您的瀏覽器或機器可能不支持它。");
     return;
   }
   //著色器資料
   const programInfos = {
-    waveShader: waveShader(gl, require("../shader/wave.vs"), require("../shader/wave.fs")),
+    waveShader: waveShader(gl),
+    normalShader: normalShader(gl),
+    refractShader: refractShader(gl),
+    viewShader: viewShader(gl),
   };
   //緩衝資料
-  const buffers = { face: faceBuffers(gl) };
+  const buffers = { face: faceBuffers(gl), view: faceBuffers(gl) };
   //貼圖
   const textures = [loadTexture(gl, image)];
   //滑鼠位置
-  const mPos = [0, 0];
+  const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
 
   canvas.addEventListener("mousemove", (ev) => {
     PointE.set(mPos, ev.pageX, ev.pageY);
   });
 
-  const framebufferTextures = {};
-  const tempFramebufferTextures = createFramebufferTextures(gl, 2);
+  const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
+  const framebufferTextures = {
+    wave: createFramebufferTexture(gl),
+    normal: createFramebufferTexture(gl),
+    refract: createFramebufferTexture(gl),
+  };
 
   let time = 0;
   function render(now) {
@@ -121,26 +127,129 @@ function main() {
     time = now;
     //console.log(1 / delta);
     requestAnimationFrame(render);
-    drawScene(gl, programInfos, buffers, textures, { now, delta, mPos, framebufferTextures, tempFramebufferTextures });
+    //console.log(mPos);
+    drawScene(gl, programInfos, buffers, textures, { now, delta, mPos, framebufferTextures, size });
   }
   requestAnimationFrame(render);
 }
 function drawScene(gl, programInfos, buffers, textures, datas) {
-  const { now } = datas;
-  const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
+  const { now, framebufferTextures, mPos, size } = datas;
   {
     const bufferData = buffers.face;
-    const waveShader = programInfos.waveShader;
-    gl.useProgram(waveShader.program);
-    waveShader.attribLocations.vertexPosition(bufferData.positionBufferData.buffer);
-    waveShader.attribLocations.textureCoord(bufferData.textureCoordinatesBufferData.buffer);
-    waveShader.uniformLocations.time(now);
-    waveShader.uniformLocations.size(size);
+    const shaderProgram = programInfos.waveShader;
+    shaderProgram.use(gl);
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.uniformSet({
+      size: size,
+      flipY: 1,
+      time: now,
+    });
+    shaderProgram.useTexture(gl, framebufferTextures.wave);
+    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+  }
 
-    gl.clearColor(0.0, 0.0, 0.0, 0.1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    waveShader.uniformLocations.flipY(-1);
+  {
+    const bufferData = buffers.face;
+    const shaderProgram = programInfos.normalShader;
+    shaderProgram.use(gl);
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.uniformSet({
+      size: size,
+      flipY: 1,
+      sampler: framebufferTextures.wave.texture,
+      height: 20,
+    });
+    shaderProgram.useTexture(gl, framebufferTextures.normal);
+    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+  }
 
-    gl.drawElements(gl.TRIANGLE_STRIP, bufferData.indicesBufferData.length, gl.UNSIGNED_BYTE, 0);
+  {
+    const bufferData = buffers.face;
+    const shaderProgram = programInfos.refractShader;
+    shaderProgram.use(gl);
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.uniformSet({
+      size: size,
+      flipY: 1,
+      sampler: textures[0],
+      normalSampler: framebufferTextures.normal.texture,
+      refractiveIndex: 1.33,
+      distance: 1000,
+    });
+    shaderProgram.useTexture(gl, framebufferTextures.refract);
+    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+  }
+
+  {
+    const mPosRate = Vector.div(mPos, size);
+
+    const bufferData = buffers.view;
+    const shaderProgram = programInfos.viewShader;
+    shaderProgram.use(gl);
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.uniformSet({
+      flipY: -1,
+    });
+    shaderProgram.useTexture(gl);
+
+    {
+      const corner = [mPosRate[0], 0, 1, mPosRate[1]];
+      const view = [
+        [corner[0], corner[1]],
+        [corner[2], corner[1]],
+        [corner[2], corner[3]],
+        [corner[0], corner[3]],
+      ].flat();
+      bufferData.positionBufferData.set(view);
+      bufferData.textureCoordinatesBufferData.set(view);
+      shaderProgram.uniformSet({
+        sampler: framebufferTextures.wave.texture,
+      });
+      shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+    }
+
+    {
+      const corner = [mPosRate[0], mPosRate[1], 1, 1];
+      const view = [
+        [corner[0], corner[1]],
+        [corner[2], corner[1]],
+        [corner[2], corner[3]],
+        [corner[0], corner[3]],
+      ].flat();
+      bufferData.positionBufferData.set(view);
+      bufferData.textureCoordinatesBufferData.set(view);
+      shaderProgram.uniformSet({
+        sampler: framebufferTextures.normal.texture,
+      });
+      shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+    }
+
+    {
+      const corner = [0, 0, mPosRate[0], 1];
+      const view = [
+        [corner[0], corner[1]],
+        [corner[2], corner[1]],
+        [corner[2], corner[3]],
+        [corner[0], corner[3]],
+      ].flat();
+      bufferData.positionBufferData.set(view);
+      bufferData.textureCoordinatesBufferData.set(view);
+      shaderProgram.uniformSet({
+        sampler: framebufferTextures.refract.texture,
+      });
+      shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+    }
   }
 }

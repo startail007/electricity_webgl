@@ -60,6 +60,17 @@ void main()
     texCol0=texture2D(uSampler,vTextureCoord-vec2(0.,offset[i])/iResolution);
     color+=texCol0*weight[i];
   }
+  /*const float pi = 3.14159;
+  const int N = 10;
+  for(int i=1;i<=N;i++){
+    //float rate = sin(0.5*(1.-float(i)/float(N))*pi);
+    float angle=sin(0.5*(float(i)/float(N))*2.*pi+.5*pi);
+    float rate = pow(exp(2.*angle)/exp(2.),.75);
+    texCol0=texture2D(uSampler,vTextureCoord+vec2(0.,i)/iResolution);
+    color+=texCol0*rate;
+    texCol0=texture2D(uSampler,vTextureCoord-vec2(0.,i)/iResolution);
+    color+=texCol0*rate;
+  }*/
   // 水平
   vec4 color2=texCol*weight[0];
   for(int i=1;i<=3;i++){
@@ -68,8 +79,17 @@ void main()
     texCol0=texture2D(uSampler,vTextureCoord-vec2(offset[i],0.)/iResolution);
     color2+=texCol0*weight[i];
   }
+  /*for(int i=1;i<=N;i++){
+    //float rate = sin(0.5*(1.-float(i)/float(N))*pi);
+    float angle=sin(0.5*(float(i)/float(N))*2.*pi+.5*pi);
+    float rate = pow(exp(2.*angle)/exp(2.),.75);
+    texCol0=texture2D(uSampler,vTextureCoord+vec2(i,0.)/iResolution);
+    color+=texCol0*rate;
+    texCol0=texture2D(uSampler,vTextureCoord-vec2(i,0.)/iResolution);
+    color+=texCol0*rate;
+  }*/
   
-  gl_FragColor=texCol+mix(color,color2,.5);
+  gl_FragColor=texCol+0.25*mix(color,color2,.5);
   
   /*vec2 iResolution=uSize/2.;
   vec4 texCol=texture2D(uSampler,vTextureCoord+vec2(10.*sin(vTextureCoord.x*10.5*3.14159),10.*sin(vTextureCoord.y*10.5*3.14159))/iResolution);

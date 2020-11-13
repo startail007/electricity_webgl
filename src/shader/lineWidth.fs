@@ -3,10 +3,9 @@ varying vec2 vTextureCoord;
 uniform sampler2D uSampler;
 uniform sampler2D uLineWidthSampler;
 uniform lowp vec2 uSize;
-
+const float pi=3.14159265359;
 void main()
 {
-  const float pi=3.14159;
   vec4 gaussCol=vec4(0.,0.,0.,0.);
   float sum=0.;
   const int lineWidth=5;
@@ -28,7 +27,7 @@ void main()
         if(r<rr){
           vec4 texCol1=texture2D(uSampler,coord);
           float rate=r/rr;
-          gaussCol+=vec4(texCol1.rgb,rate);
+          gaussCol+=vec4(texCol1.rgb*rate,rate);
           sum+=texCol0.r*smoothstep(1.,0.,rate);
         }
       }
@@ -61,6 +60,6 @@ void main()
   }*/
   gaussCol.rgb/=gaussCol.w;
   
-  gl_FragColor=vec4(gaussCol.rgb*sum,1.);
+  gl_FragColor=vec4(gaussCol.rgb*sum,sum);
   
 }

@@ -1,136 +1,10 @@
-import {
-  initShaderProgram,
-  setFramebuffer,
-  createFramebufferTexture,
-  createFramebufferTextures,
-  arrayBufferData,
-  elementArrayBufferData,
-  loadTexture,
-} from "../js/glSupply";
+import { createFramebufferTexture, arrayBufferData, elementArrayBufferData } from "../js/glSupply";
 import { PointE } from "../js/point";
+import lineWidthShader from "../js/shader/lineWidthShader";
+import blurShader from "../js/shader/blurShader";
+import addShader from "../js/shader/addShader";
+import lineShader from "../js/shader/lineShader";
 main();
-
-function lineWidthShader(gl, vs, fs) {
-  const shaderProgram = initShaderProgram(gl, vs, fs);
-  const programInfo = {
-    program: shaderProgram,
-    attribLocations: {
-      vertexPosition: (() => {
-        const i = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-        return (val) => {
-          //頂點
-          gl.bindBuffer(gl.ARRAY_BUFFER, val);
-          gl.vertexAttribPointer(i, 2, gl.FLOAT, false, 0, 0);
-          gl.enableVertexAttribArray(i);
-        };
-      })(),
-      textureCoord: (() => {
-        const i = gl.getAttribLocation(shaderProgram, "aTextureCoord");
-        return (val) => {
-          //貼圖UV座標
-          gl.bindBuffer(gl.ARRAY_BUFFER, val);
-          gl.vertexAttribPointer(i, 2, gl.FLOAT, false, 0, 0);
-          gl.enableVertexAttribArray(i);
-        };
-      })(),
-    },
-    uniformLocations: {
-      flipY: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uFlipY");
-        return (val) => {
-          //翻轉水平
-          gl.uniform1f(i, val);
-        };
-      })(),
-      sampler: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uSampler");
-        return (val, index = 0) => {
-          //貼圖
-          gl.activeTexture(gl.TEXTURE0 + index);
-          gl.bindTexture(gl.TEXTURE_2D, val);
-          gl.uniform1i(i, index);
-        };
-      })(),
-      lineWidthSampler: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uLineWidthSampler");
-        return (val, index = 1) => {
-          //貼圖
-          gl.activeTexture(gl.TEXTURE0 + index);
-          gl.bindTexture(gl.TEXTURE_2D, val);
-          gl.uniform1i(i, index);
-        };
-      })(),
-      size: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uSize");
-        return (val) => {
-          //顯示畫面大小
-          gl.uniform2fv(i, val);
-        };
-      })(),
-    },
-  };
-  return programInfo;
-}
-
-function glowShader(gl, vs, fs) {
-  const shaderProgram = initShaderProgram(gl, vs, fs);
-  const programInfo = {
-    program: shaderProgram,
-    attribLocations: {
-      vertexPosition: (() => {
-        const i = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-        return (val) => {
-          //頂點
-          gl.bindBuffer(gl.ARRAY_BUFFER, val);
-          gl.vertexAttribPointer(i, 2, gl.FLOAT, false, 0, 0);
-          gl.enableVertexAttribArray(i);
-        };
-      })(),
-      textureCoord: (() => {
-        const i = gl.getAttribLocation(shaderProgram, "aTextureCoord");
-        return (val) => {
-          //貼圖UV座標
-          gl.bindBuffer(gl.ARRAY_BUFFER, val);
-          gl.vertexAttribPointer(i, 2, gl.FLOAT, false, 0, 0);
-          gl.enableVertexAttribArray(i);
-        };
-      })(),
-    },
-    uniformLocations: {
-      flipY: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uFlipY");
-        return (val) => {
-          //翻轉水平
-          gl.uniform1f(i, val);
-        };
-      })(),
-      sampler: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uSampler");
-        return (val, index = 0) => {
-          //貼圖
-          gl.activeTexture(gl.TEXTURE0 + index);
-          gl.bindTexture(gl.TEXTURE_2D, val);
-          gl.uniform1i(i, index);
-        };
-      })(),
-      size: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uSize");
-        return (val) => {
-          //顯示畫面大小
-          gl.uniform2fv(i, val);
-        };
-      })(),
-      mouse: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uMouse");
-        return (val) => {
-          //滑鼠位置
-          gl.uniform2fv(i, val);
-        };
-      })(),
-    },
-  };
-  return programInfo;
-}
 
 function faceBuffers(gl) {
   const positions = [
@@ -151,8 +25,8 @@ function faceBuffers(gl) {
 
   //ELEMENT_ARRAY_BUFFER
   const indices = [
-    [0, 1, 3],
-    [1, 2, 3],
+    [2, 0, 1],
+    [3, 2, 0],
   ].flat();
   const indicesBufferData = elementArrayBufferData(gl, indices);
 
@@ -163,49 +37,6 @@ function faceBuffers(gl) {
   };
 }
 
-function lineShader(gl, vs, fs) {
-  const shaderProgram = initShaderProgram(gl, vs, fs);
-  const programInfo = {
-    program: shaderProgram,
-    attribLocations: {
-      vertexPosition: (() => {
-        const i = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-        return (val) => {
-          //頂點
-          gl.bindBuffer(gl.ARRAY_BUFFER, val);
-          gl.vertexAttribPointer(i, 2, gl.FLOAT, false, 0, 0);
-          gl.enableVertexAttribArray(i);
-        };
-      })(),
-      vertexColor: (() => {
-        const i = gl.getAttribLocation(shaderProgram, "aVertexColor");
-        return (val) => {
-          //頂點顏色
-          gl.bindBuffer(gl.ARRAY_BUFFER, val);
-          gl.vertexAttribPointer(i, 4, gl.FLOAT, false, 0, 0);
-          gl.enableVertexAttribArray(i);
-        };
-      })(),
-    },
-    uniformLocations: {
-      flipY: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uFlipY");
-        return (val) => {
-          //翻轉水平
-          gl.uniform1f(i, val);
-        };
-      })(),
-      size: (() => {
-        const i = gl.getUniformLocation(shaderProgram, "uSize");
-        return (val) => {
-          //顯示畫面大小
-          gl.uniform2fv(i, val);
-        };
-      })(),
-    },
-  };
-  return programInfo;
-}
 function lineBuffers(gl) {
   const positionBufferData = arrayBufferData(gl, [], 2, gl.DYNAMIC_DRAW);
   const colorBufferData = arrayBufferData(gl, [], 4, gl.DYNAMIC_DRAW);
@@ -220,16 +51,20 @@ function lineBuffers(gl) {
 
 function main() {
   const canvas = document.querySelector("#glcanvas");
-  const gl = canvas.getContext("webgl");
+  const gl = canvas.getContext("webgl", {
+    //premultipliedAlpha: false,
+    alpha: false,
+  });
   if (!gl) {
     alert("無法初始化WebGL。您的瀏覽器或機器可能不支持它。");
     return;
   }
   //著色器資料
   const programInfos = {
-    glowShader: glowShader(gl, require("../shader/glow.vs"), require("../shader/glow.fs")),
-    lineShader: lineShader(gl, require("../shader/line.vs"), require("../shader/line.fs")),
-    lineWidthShader: lineWidthShader(gl, require("../shader/lineWidth.vs"), require("../shader/lineWidth.fs")),
+    blurShader: blurShader(gl),
+    lineShader: lineShader(gl),
+    lineWidthShader: lineWidthShader(gl),
+    addShader: addShader(gl),
   };
   //緩衝資料
   const buffers = { face: faceBuffers(gl), line: lineBuffers(gl) };
@@ -242,12 +77,14 @@ function main() {
     PointE.set(mPos, ev.pageX, ev.pageY);
   });
 
+  const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
   const framebufferTextures = {
-    line: createFramebufferTexture(gl),
+    lineColor: createFramebufferTexture(gl),
     lineWidth: createFramebufferTexture(gl),
-    glow: createFramebufferTexture(gl),
+    line: createFramebufferTexture(gl),
+    blurX: createFramebufferTexture(gl),
+    blurY: createFramebufferTexture(gl),
   };
-  const tempFramebufferTextures = createFramebufferTextures(gl, 2);
   buffers.line.positionBufferData.set(
     [
       [0.0, 0.0],
@@ -287,11 +124,11 @@ function main() {
     time = now;
     //console.log(1 / delta);
     requestAnimationFrame(render);
-    drawScene(delta, gl, programInfos, buffers, textures, mPos, framebufferTextures, tempFramebufferTextures);
+    drawScene(delta, gl, programInfos, buffers, textures, size, mPos, framebufferTextures);
   }
   requestAnimationFrame(render);
 }
-function drawScene(delta, gl, programInfos, buffers, textures, mPos, framebufferTextures, tempFramebufferTextures) {
+function drawScene(delta, gl, programInfos, buffers, textures, size, mPos, framebufferTextures) {
   /*gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
@@ -301,8 +138,6 @@ function drawScene(delta, gl, programInfos, buffers, textures, mPos, framebuffer
   //console.log(colors);
 
   //console.log(particles.length);
-  let count = 0;
-  let framebufferTexture;
   {
     const bufferData = buffers.line;
     {
@@ -317,85 +152,103 @@ function drawScene(delta, gl, programInfos, buffers, textures, mPos, framebuffer
       pos01[1] %= 100;
       bufferData.positionBufferData.item(2, pos01);
     }
+    const shaderProgram = programInfos.lineShader;
+    shaderProgram.use(gl);
+    shaderProgram.uniformSet({
+      size: size,
+      flipY: 1,
+    });
 
-    const lineShader = programInfos.lineShader;
-    gl.useProgram(lineShader.program);
-    lineShader.attribLocations.vertexPosition(bufferData.positionBufferData.buffer);
-    lineShader.uniformLocations.size([gl.canvas.clientWidth, gl.canvas.clientHeight]);
-    lineShader.uniformLocations.flipY(1);
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+    });
+    shaderProgram.attribSet({
+      vertexColor: bufferData.colorBufferData.buffer,
+    });
+    shaderProgram.useTexture(gl, framebufferTextures.lineColor);
+    shaderProgram.draw(gl, gl.LINE_STRIP, bufferData.positionBufferData.data.length / 2);
 
-    //gl.drawArrays(gl.LINES, 0, bufferData.indexLength);
-    //gl.lineWidth(50.0);
-    //gl.lineWidth(2.0);
-    //console.log();
-    //gl.drawArrays(gl.LINE_STRIP, 0, bufferData.indexLength);
-
-    setFramebuffer(gl, framebufferTextures.line.framebuffer, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    lineShader.attribLocations.vertexColor(bufferData.colorBufferData.buffer);
-    gl.drawArrays(gl.LINE_STRIP, 0, bufferData.positionBufferData.data.length / 2);
-
-    setFramebuffer(gl, framebufferTextures.lineWidth.framebuffer, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    lineShader.attribLocations.vertexColor(bufferData.lineWidthBufferData.buffer);
-    gl.drawArrays(gl.LINE_STRIP, 0, bufferData.positionBufferData.data.length / 2);
+    shaderProgram.attribSet({
+      vertexColor: bufferData.lineWidthBufferData.buffer,
+    });
+    shaderProgram.useTexture(gl, framebufferTextures.lineWidth);
+    shaderProgram.draw(gl, gl.LINE_STRIP, bufferData.positionBufferData.data.length / 2);
   }
 
   {
-    //使用著色器程序
     const bufferData = buffers.face;
-    const lineWidthShader = programInfos.lineWidthShader;
-    gl.useProgram(lineWidthShader.program);
-    lineWidthShader.attribLocations.vertexPosition(bufferData.positionBufferData.buffer);
-    lineWidthShader.attribLocations.textureCoord(bufferData.textureCoordinatesBufferData.buffer);
-    lineWidthShader.uniformLocations.flipY(1);
-    lineWidthShader.uniformLocations.sampler(framebufferTextures.line.texture);
-    lineWidthShader.uniformLocations.lineWidthSampler(framebufferTextures.lineWidth.texture);
-    lineWidthShader.uniformLocations.size([gl.canvas.clientWidth, gl.canvas.clientHeight]);
-
-    /*setFramebuffer(gl, null, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    lineWidthShader.uniformLocations.flipY(-1);
-
-    gl.drawElements(gl.TRIANGLE_STRIP, bufferData.indicesBufferData.length, gl.UNSIGNED_BYTE, 0);*/
-
-    setFramebuffer(gl, framebufferTextures.glow.framebuffer, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawElements(gl.TRIANGLE_STRIP, bufferData.indicesBufferData.length, gl.UNSIGNED_BYTE, 0);
+    const shaderProgram = programInfos.lineWidthShader;
+    shaderProgram.use(gl);
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.uniformSet({
+      size: size,
+      flipY: 1,
+      sampler: framebufferTextures.lineColor.texture,
+      lineWidthSampler: framebufferTextures.lineWidth.texture,
+    });
+    shaderProgram.useTexture(gl, framebufferTextures.line);
+    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
   }
 
   {
-    //使用著色器程序
     const bufferData = buffers.face;
-    const glowShader = programInfos.glowShader;
-    gl.useProgram(glowShader.program);
-    glowShader.attribLocations.vertexPosition(bufferData.positionBufferData.buffer);
-    glowShader.attribLocations.textureCoord(bufferData.textureCoordinatesBufferData.buffer);
-    glowShader.uniformLocations.flipY(1);
-    glowShader.uniformLocations.sampler(framebufferTextures.glow.texture);
-    //glowShader.uniformLocations.sampler(textures[0]);
-    glowShader.uniformLocations.size([gl.canvas.clientWidth, gl.canvas.clientHeight]);
-    glowShader.uniformLocations.mouse(mPos);
+    const shaderProgram = programInfos.blurShader;
+    shaderProgram.use(gl);
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.uniformSet({
+      size: size,
+      flipY: 1,
+      sampler: framebufferTextures.line.texture,
+      width: 10,
+      power: 0.125,
+      dir: [1, 0],
+    });
+    shaderProgram.useTexture(gl, framebufferTextures.blurX);
+    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
 
-    /*for (let i = 0; i < 2; i++) {
-      framebufferTexture = tempFramebufferTextures[count % 2];
-      setFramebuffer(gl, framebufferTexture.framebuffer, gl.canvas.width, gl.canvas.height);
-      gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.drawElements(gl.TRIANGLE_STRIP, bufferData.indicesBufferData.length, gl.UNSIGNED_BYTE, 0);
-      glowShader.uniformLocations.sampler(framebufferTexture.texture);
-      count++;
-    }*/
+    shaderProgram.uniformSet({
+      sampler: framebufferTextures.blurX.texture,
+      dir: [0, 1],
+    });
+    shaderProgram.useTexture(gl, framebufferTextures.blurY);
+    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+  }
 
-    setFramebuffer(gl, null, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    glowShader.uniformLocations.flipY(-1);
+  {
+    /*gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
 
-    gl.drawElements(gl.TRIANGLE_STRIP, bufferData.indicesBufferData.length, gl.UNSIGNED_BYTE, 0);
+    gl.enable(gl.BLEND);
+    gl.blendEquation(gl.FUNC_ADD);
+    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.ONE, gl.ZERO);
+    //gl.blendFunc(gl.ONE, gl.ZERO);
+    gl.clearColor(0.0, 0.0, 0.0, 0.0);
+    gl.clearDepth(1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);*/
+  }
+
+  {
+    const bufferData = buffers.face;
+    const shaderProgram = programInfos.addShader;
+    shaderProgram.use(gl);
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.uniformSet({
+      flipY: -1,
+      samplerA: framebufferTextures.line.texture,
+      samplerB: framebufferTextures.blurY.texture,
+    });
+    shaderProgram.useTexture(gl);
+    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
   }
 }
