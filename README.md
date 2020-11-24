@@ -32,11 +32,11 @@
 
 ### [8.noiseElectricity](https://virtools.github.io/electricity_webgl/dist/8.noiseElectricity/)
 
-##### 使用 noise 讓直線扭曲呈現電流效果
+##### 讓直線透過 noise 來扭曲呈現電流效果
 
 ### [9.coordinate](https://virtools.github.io/electricity_webgl/dist/9.coordinate/)
 
-##### 各種座標空間轉換
+##### 各種 UV 座標轉換
 
 ### [10.curve](https://virtools.github.io/electricity_webgl/dist/10.curve/)
 

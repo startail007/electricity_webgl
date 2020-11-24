@@ -20,9 +20,9 @@ const shader = (gl, vs, fs) => {
 export default (gl) => {
   return Object.assign(shaderProgramFun(gl, shader, vs, fs), {
     draw(length) {
-      gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_INT, 0);
+      //gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_INT, 0);
       //gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_SHORT, 0);
-      //gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_BYTE, 0);
+      gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_BYTE, 0);
 
       //gl.drawArrays(gl.TRIANGLES, 0, length);
     },
