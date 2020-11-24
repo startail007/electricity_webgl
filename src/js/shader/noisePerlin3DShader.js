@@ -16,14 +16,15 @@ const shader = (gl, vs, fs) => {
       grid: uniformFuns.uniform3fv(gl, shaderProgram, "uGrid"),
       pos: uniformFuns.uniform3fv(gl, shaderProgram, "uPos"),
       type: uniformFuns.uniform1i(gl, shaderProgram, "uType"),
+      loop: uniformFuns.uniform3fv(gl, shaderProgram, "uLoop"),
     },
   };
   return programInfo;
 };
 export default (gl) => {
   return Object.assign(shaderProgramFun(gl, shader, vs, fs), {
-    draw(gl, length) {
-      gl.drawElements(gl.TRIANGLE_STRIP, length, gl.UNSIGNED_BYTE, 0);
+    draw(length) {
+      gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_BYTE, 0);
     },
   });
 };

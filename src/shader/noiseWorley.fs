@@ -54,7 +54,7 @@ float fbm_noise_worley(vec2 p,vec2 loop){
   for(int i=0;i<OCTAVE_NUM;i++)
   {
     f+=a*noise_worley(p,loop);
-    p=2.*p;
+    p*=2.;
     a/=2.;
   }
   return f;
@@ -65,7 +65,7 @@ float fbm_abs_noise_worley(vec2 p,vec2 loop){
   for(int i=0;i<OCTAVE_NUM;i++)
   {
     f+=a*abs(noise_worley(p,loop)*2.-1.);
-    p=2.*p;
+    p*=2.;
     a/=2.;
   }
   f=f*.5+.5;

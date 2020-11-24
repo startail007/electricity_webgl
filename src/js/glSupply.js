@@ -25,7 +25,7 @@ const loadShader = (gl, type, source) => {
   }
   return shader;
 };
-const arrayBufferData = (gl, data, count, usage = gl.STATIC_DRAW) => {
+const arrayBufferData = (gl, data, count, classType = Float32Array, usage = gl.STATIC_DRAW) => {
   let _data;
   const buffer = gl.createBuffer();
   let bufferLength = 0;
@@ -38,7 +38,7 @@ const arrayBufferData = (gl, data, count, usage = gl.STATIC_DRAW) => {
       return _data.length;
     },
     set(data) {
-      _data = new Float32Array(data);
+      _data = new classType(data);
       /*gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferData(gl.ARRAY_BUFFER, _data.length * 4, usage);
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, _data);*/
@@ -59,13 +59,13 @@ const arrayBufferData = (gl, data, count, usage = gl.STATIC_DRAW) => {
         gl.bufferData(gl.ARRAY_BUFFER, bufferLength * count * 4, usage);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, _data);
       }
-      const temp = new Float32Array(len + count);
+      const temp = new classType(len + count);
       temp.set(_data);
       _data = temp;
       this.item(len / count, data);
     },
     item(index, data) {
-      const temp = new Float32Array(data);
+      const temp = new classType(data);
       _data.set(temp, index * count);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferSubData(gl.ARRAY_BUFFER, index * count * 4, temp);
@@ -77,8 +77,61 @@ const arrayBufferData = (gl, data, count, usage = gl.STATIC_DRAW) => {
   obj.set(data);
   return obj;
 };
+const elementArrayBufferData = (gl, data, classType = Uint8Array, usage = gl.STATIC_DRAW) => {
+  let _data; // = new Uint8Array(data);
+  const buffer = gl.createBuffer();
+  //gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+  //gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, _data, usage);
+  let bufferLength = 0;
+  const count = 3;
+  const obj = {
+    buffer: buffer,
+    get data() {
+      return _data;
+    },
+    get length() {
+      return _data.length;
+    },
+    set(data) {
+      _data = new classType(data);
+      bufferLength = 100 * Math.ceil(_data.length / count / 100);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, bufferLength * count * 4, usage);
+      gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, _data);
+      //console.log(bufferLength, count);
+    },
+    add(data) {
+      const len = _data.length;
+      /*gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, (len + count) * 4, usage);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, _data);*/
+      const tempBufferLength = 100 * Math.floor(_data.length / count / 100);
+      if (tempBufferLength >= bufferLength) {
+        bufferLength = tempBufferLength + 100;
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, bufferLength * count * 4, usage);
+        gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, _data);
+      }
+      const temp = new classType(len + count);
+      temp.set(_data);
+      _data = temp;
+      this.item(len / count, data);
+    },
+    item(index, data) {
+      const temp = new classType(data);
+      _data.set(temp, index * count);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+      gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, index * count * 4, temp);
+    },
+    getItem(index) {
+      return Array.from(_data.slice(index * count, (index + 1) * count));
+    },
+  };
+  obj.set(data);
+  return obj;
+};
 
-const arrayBufferData0 = (gl, data, count, usage = gl.STATIC_DRAW) => {
+/*const arrayBufferData0 = (gl, data, count, usage = gl.STATIC_DRAW) => {
   let _data;
   const buffer = gl.createBuffer();
   const obj = {
@@ -114,24 +167,7 @@ const arrayBufferData0 = (gl, data, count, usage = gl.STATIC_DRAW) => {
   };
   obj.set(data);
   return obj;
-};
-
-const elementArrayBufferData = (gl, data, usage = gl.STATIC_DRAW) => {
-  let _data = new Uint8Array(data);
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, _data, usage);
-  const obj = {
-    buffer: buffer,
-    get data() {
-      return _data;
-    },
-    get length() {
-      return _data.length;
-    },
-  };
-  return obj;
-};
+};*/
 
 const createAndSetupTexture = (gl) => {
   var texture = gl.createTexture();
@@ -147,6 +183,8 @@ const loadTexture = (gl, url) => {
   const texture = createAndSetupTexture(gl);
   const image = new Image();
   image.onload = function () {
+    texture.width = image.width;
+    texture.height = image.height;
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
   };
@@ -155,7 +193,7 @@ const loadTexture = (gl, url) => {
 };
 const setFramebuffer = (gl, fbo, width, height) => {
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-  if (width == undefined && height == undefined) {
+  if (width !== undefined && height !== undefined) {
     gl.viewport(0, 0, width, height);
   }
 };
@@ -247,13 +285,18 @@ const uniformFuns = {
       gl.uniform1i(i, val);
     };
   },
+  uniformMatrix4fv(gl, shaderProgram, name) {
+    const i = gl.getUniformLocation(shaderProgram, name);
+    return (val) => {
+      gl.uniformMatrix4fv(i, false, val);
+    };
+  },
 };
 const shaderProgramFun = (gl, shader, vs, fs, drawFun) => {
   const programInfo = shader(gl, vs, fs);
   return {
     programInfo: programInfo,
-
-    use(gl) {
+    use() {
       gl.useProgram(programInfo.program);
     },
     attribSet(vals) {
@@ -270,14 +313,25 @@ const shaderProgramFun = (gl, shader, vs, fs, drawFun) => {
         }
       }
     },
-    useTexture(gl, texture, clear = true) {
-      useFramebufferTexture(gl, texture);
-      if (clear) {
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-      }
-    },
   };
+};
+const getViewData = (corner) => {
+  return [
+    [corner[0], corner[1]],
+    [corner[2], corner[1]],
+    [corner[2], corner[3]],
+    [corner[0], corner[3]],
+  ].flat();
+};
+const clear = (gl) => {
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+};
+const useTexture = (gl, texture, clearBool = true) => {
+  useFramebufferTexture(gl, texture);
+  if (clearBool) {
+    clear(gl);
+  }
 };
 export {
   shaderProgramFun,
@@ -288,10 +342,13 @@ export {
   createFramebufferTexture,
   createFramebufferTextures,
   arrayBufferData,
-  arrayBufferData0,
+  //arrayBufferData0,
   elementArrayBufferData,
   createAndSetupTexture,
   loadTexture,
   attribFuns,
   uniformFuns,
+  getViewData,
+  clear,
+  useTexture,
 };

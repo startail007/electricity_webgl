@@ -18,7 +18,7 @@ const shader = (gl, vs, fs) => {
 };
 export default (gl) => {
   return Object.assign(shaderProgramFun(gl, shader, vs, fs), {
-    draw(gl, type, length) {
+    draw(type, length) {
       gl.drawArrays(type, 0, length);
     },
   });

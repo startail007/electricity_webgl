@@ -50,7 +50,7 @@ float fbm_noise_value(vec2 p,vec2 loop){
   for(int i=0;i<OCTAVE_NUM;i++)
   {
     f+=a*noise_value(p,loop);
-    p=2.*p;
+    p*=2.;
     a/=2.;
   }
   return f;
@@ -61,7 +61,7 @@ float fbm_abs_noise_value(vec2 p,vec2 loop){
   for(int i=0;i<OCTAVE_NUM;i++)
   {
     f+=a*abs(noise_value(p,loop));
-    p=2.*p;
+    p*=2.;
     a/=2.;
   }
   return f;

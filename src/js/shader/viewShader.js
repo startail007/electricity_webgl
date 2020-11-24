@@ -18,16 +18,8 @@ const shader = (gl, vs, fs) => {
 };
 export default (gl) => {
   return Object.assign(shaderProgramFun(gl, shader, vs, fs), {
-    getViewData(corner) {
-      return [
-        [corner[0], corner[1]],
-        [corner[2], corner[1]],
-        [corner[2], corner[3]],
-        [corner[0], corner[3]],
-      ].flat();
-    },
-    draw(gl, length) {
-      gl.drawElements(gl.TRIANGLE_STRIP, length, gl.UNSIGNED_BYTE, 0);
+    draw(length) {
+      gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_BYTE, 0);
     },
   });
 };

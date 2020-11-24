@@ -15,14 +15,24 @@ const shader = (gl, vs, fs) => {
       size: uniformFuns.uniform2fv(gl, shaderProgram, "uSize"),
       startPos: uniformFuns.uniform2fv(gl, shaderProgram, "uStartPos"),
       endPos: uniformFuns.uniform2fv(gl, shaderProgram, "uEndPos"),
+      offset: uniformFuns.uniform1f(gl, shaderProgram, "uOffset"),
+      lineWidth: uniformFuns.uniform1f(gl, shaderProgram, "uLineWidth"),
+      branchBool: uniformFuns.uniform1i(gl, shaderProgram, "uBranchBool"),
+      branchOffset: uniformFuns.uniform1f(gl, shaderProgram, "uBranchOffset"),
+
+      branchStartPos: uniformFuns.uniform2fv(gl, shaderProgram, "uBranchStartPos"),
+      branchEndPos: uniformFuns.uniform2fv(gl, shaderProgram, "uBranchEndPos"),
+
+      startFixed: uniformFuns.uniform1i(gl, shaderProgram, "uStartFixed"),
+      endFixed: uniformFuns.uniform1i(gl, shaderProgram, "uEndFixed"),
     },
   };
   return programInfo;
 };
 export default (gl) => {
   return Object.assign(shaderProgramFun(gl, shader, vs, fs), {
-    draw(gl, length) {
-      gl.drawElements(gl.TRIANGLE_STRIP, length, gl.UNSIGNED_BYTE, 0);
+    draw(length) {
+      gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_BYTE, 0);
     },
   });
 };

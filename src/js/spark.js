@@ -1,5 +1,4 @@
 import { Vector, VectorE } from "./vector";
-import { PointE } from "./point";
 class Spark {
   constructor(pos = [0, 0], velocity = 10, direct = 0, lifespan = 25, thickness = 3, friction = 0.94) {
     this.options = {
@@ -27,8 +26,8 @@ class Spark {
     this.swing = Math.random();
   }
   update() {
-    PointE.set(this.prevPos, ...this.pos);
-    PointE.addVector(this.pos, this.velocityPos);
+    VectorE.set(this.prevPos, ...this.pos);
+    VectorE.add(this.pos, this.velocityPos);
     const swingV = [0, Math.sin(this.swing * 2 * Math.PI)];
     VectorE.rotate(swingV, Vector.getAngle(this.velocityPos));
     VectorE.scale(swingV, this.lifespan / this.maxlife);

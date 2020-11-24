@@ -15,7 +15,7 @@ void main()
     if(uWidth<float(N)&&float(i)>uWidth){
       break;
     }
-    float val=sin(.5*(float(i)/float(N))*2.*pi+.5*pi);
+    float val=cos((float(i)/float(N))*pi);
     float rate=pow(exp(2.*val)/exp(2.),.75);
     color+=rate*texture2D(uSampler,vTextureCoord+float(i)*ii*uDir/uSize);
     color+=rate*texture2D(uSampler,vTextureCoord-float(i)*ii*uDir/uSize);

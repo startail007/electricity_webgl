@@ -48,7 +48,7 @@ float fbm_noise_simplex(vec2 p){
   for(int i=0;i<OCTAVE_NUM;i++)
   {
     f+=a*noise_simplex(p);
-    p=2.*p;
+    p*=2.;
     a/=2.;
   }
   return f;
@@ -60,7 +60,7 @@ float fbm_abs_noise_simplex(vec2 p){
   for(int i=0;i<OCTAVE_NUM;i++)
   {
     f+=a*abs(noise_simplex(p));
-    p=2.*p;
+    p*=2.;
     a/=2.;
   }
   return f;

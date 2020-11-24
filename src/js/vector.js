@@ -1,3 +1,4 @@
+import { Float } from "./float";
 class Vector {
   static normalize(vector) {
     const len = Vector.length(vector);
@@ -39,14 +40,39 @@ class Vector {
   static scale(vector, scale) {
     return [vector[0] * scale, vector[1] * scale];
   }
-  static collisionCalc(vector1, vector2, mass1, mass2) {
+  static collisionCalc(vector0, vector1, mass0, mass1) {
     return Vector.scale(
-      Vector.add(Vector.scale(vector1, mass1 - mass2), Vector.scale(vector2, 2 * mass2)),
-      1 / (mass1 + mass2)
+      Vector.add(Vector.scale(vector0, mass0 - mass1), Vector.scale(vector1, 2 * mass1)),
+      1 / (mass0 + mass1)
     );
   }
   static getAngle(vector) {
     return Math.atan2(vector[1], vector[0]);
+  }
+
+  static floor(vector) {
+    return [Math.floor(vector[0]), Math.floor(vector[1])];
+  }
+  static fract(vector) {
+    return [Float.fract(vector[0]), Float.fract(vector[1])];
+  }
+  static sin(vector) {
+    return [Math.sin(vector[0]), Math.sin(vector[1])];
+  }
+  static cos(vector) {
+    return [Math.cos(vector[0]), Math.cos(vector[1])];
+  }
+  static distance(vector0, vector1) {
+    return Vector.length(Vector.sub(vector1, vector0));
+  }
+  static mix(vector0, vector1, rate) {
+    return [Float.mix(vector0[0], vector1[0], rate), Float.mix(vector0[1], vector1[1], rate)];
+  }
+  static abs(vector) {
+    return [Math.abs(vector[0]), Math.abs(vector[1])];
+  }
+  static getLine(vector0, vector1) {
+    return { pos: vector0, dir: Vector.sub(vector1, vector0) };
   }
   /*static refraction(vector, f, n) {
     //var fn = f.normalize();
@@ -116,5 +142,14 @@ class VectorE {
     return vector;
   }
 }
-
-export { Vector, VectorE };
+const getQuadraticCurveTo = (vector0, vector1, vector2, t) => {
+  const x = vector0[0] * (1 - t) * (1 - t) + 2 * vector1[0] * (1 - t) * t + vector2[0] * t * t;
+  const y = vector0[1] * (1 - t) * (1 - t) + 2 * vector1[1] * (1 - t) * t + vector2[1] * t * t;
+  return [x, y];
+};
+const getQuadraticCurveToTangent = (vector0, vector1, vector2, t) => {
+  const x = 2 * t * (vector0[0] - vector1[0] * 2 + vector2[0]) + 2 * (-vector0[0] + vector1[0]);
+  const y = 2 * t * (vector0[1] - vector1[1] * 2 + vector2[1]) + 2 * (-vector0[1] + vector1[1]);
+  return [x, y];
+};
+export { getQuadraticCurveTo, getQuadraticCurveToTangent, Vector, VectorE };

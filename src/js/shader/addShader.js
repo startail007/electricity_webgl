@@ -19,8 +19,8 @@ const shader = (gl, vs, fs) => {
 };
 export default (gl) => {
   return Object.assign(shaderProgramFun(gl, shader, vs, fs), {
-    draw(gl, length) {
-      gl.drawElements(gl.TRIANGLE_STRIP, length, gl.UNSIGNED_BYTE, 0);
+    draw(length) {
+      gl.drawElements(gl.TRIANGLES, length, gl.UNSIGNED_BYTE, 0);
     },
   });
 };

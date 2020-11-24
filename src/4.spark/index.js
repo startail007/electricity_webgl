@@ -1,6 +1,6 @@
 import { Spark } from "../js/spark";
-import { createFramebufferTexture, arrayBufferData, elementArrayBufferData } from "../js/glSupply";
-import { PointE } from "../js/point";
+import { createFramebufferTexture, arrayBufferData, elementArrayBufferData, useTexture } from "../js/glSupply";
+import { VectorE } from "../js/vector";
 import lineWidthShader from "../js/shader/lineWidthShader";
 import blurShader from "../js/shader/blurShader";
 import addShader from "../js/shader/addShader";
@@ -26,8 +26,8 @@ function faceBuffers(gl) {
 
   //ELEMENT_ARRAY_BUFFER
   const indices = [
-    [2, 0, 1],
-    [3, 2, 0],
+    [0, 1, 3],
+    [1, 2, 3],
   ].flat();
   const indicesBufferData = elementArrayBufferData(gl, indices);
 
@@ -39,9 +39,9 @@ function faceBuffers(gl) {
 }
 
 function lineBuffers(gl) {
-  const positionBufferData = arrayBufferData(gl, [], 2, gl.DYNAMIC_DRAW);
-  const colorBufferData = arrayBufferData(gl, [], 4, gl.DYNAMIC_DRAW);
-  const lineWidthBufferData = arrayBufferData(gl, [], 4, gl.DYNAMIC_DRAW);
+  const positionBufferData = arrayBufferData(gl, [], 2);
+  const colorBufferData = arrayBufferData(gl, [], 4);
+  const lineWidthBufferData = arrayBufferData(gl, [], 4);
 
   return {
     positionBufferData: positionBufferData,
@@ -70,12 +70,12 @@ function main() {
   //緩衝資料
   const buffers = { face: faceBuffers(gl), line: lineBuffers(gl) };
   //貼圖
-  const textures = [];
+  const textures = {};
   //滑鼠位置
   const mPos = [0, 0];
 
   canvas.addEventListener("mousemove", (ev) => {
-    PointE.set(mPos, ev.pageX, ev.pageY);
+    VectorE.set(mPos, ev.pageX, ev.pageY);
   });
 
   const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
@@ -87,7 +87,7 @@ function main() {
     blurY: createFramebufferTexture(gl),
   };
   canvas.addEventListener("mousedown", (ev) => {
-    PointE.set(mPos, ev.pageX, ev.pageY);
+    VectorE.set(mPos, ev.pageX, ev.pageY);
     for (let i = 0; i < 50; i++) {
       particles.push(
         new Spark(
@@ -135,7 +135,7 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
   {
     const bufferData = buffers.line;
     const shaderProgram = programInfos.lineShader;
-    shaderProgram.use(gl);
+    shaderProgram.use();
     shaderProgram.uniformSet({
       size: size,
       flipY: 1,
@@ -147,20 +147,20 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
     shaderProgram.attribSet({
       vertexColor: bufferData.colorBufferData.buffer,
     });
-    shaderProgram.useTexture(gl, framebufferTextures.lineColor);
-    shaderProgram.draw(gl, gl.LINES, bufferData.positionBufferData.data.length / 2);
+    useTexture(gl, framebufferTextures.lineColor);
+    shaderProgram.draw(gl.LINES, bufferData.positionBufferData.data.length / 2);
 
     shaderProgram.attribSet({
       vertexColor: bufferData.lineWidthBufferData.buffer,
     });
-    shaderProgram.useTexture(gl, framebufferTextures.lineWidth);
-    shaderProgram.draw(gl, gl.LINES, bufferData.positionBufferData.data.length / 2);
+    useTexture(gl, framebufferTextures.lineWidth);
+    shaderProgram.draw(gl.LINES, bufferData.positionBufferData.data.length / 2);
   }
 
   {
     const bufferData = buffers.face;
     const shaderProgram = programInfos.lineWidthShader;
-    shaderProgram.use(gl);
+    shaderProgram.use();
     shaderProgram.attribSet({
       vertexPosition: bufferData.positionBufferData.buffer,
       textureCoord: bufferData.textureCoordinatesBufferData.buffer,
@@ -171,14 +171,14 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       sampler: framebufferTextures.lineColor.texture,
       lineWidthSampler: framebufferTextures.lineWidth.texture,
     });
-    shaderProgram.useTexture(gl, framebufferTextures.line);
-    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+    useTexture(gl, framebufferTextures.line);
+    shaderProgram.draw(bufferData.indicesBufferData.length);
   }
 
   {
     const bufferData = buffers.face;
     const shaderProgram = programInfos.blurShader;
-    shaderProgram.use(gl);
+    shaderProgram.use();
     shaderProgram.attribSet({
       vertexPosition: bufferData.positionBufferData.buffer,
       textureCoord: bufferData.textureCoordinatesBufferData.buffer,
@@ -191,21 +191,21 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       power: 0.125,
       dir: [1, 0],
     });
-    shaderProgram.useTexture(gl, framebufferTextures.blurX);
-    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+    useTexture(gl, framebufferTextures.blurX);
+    shaderProgram.draw(bufferData.indicesBufferData.length);
 
     shaderProgram.uniformSet({
       sampler: framebufferTextures.blurX.texture,
       dir: [0, 1],
     });
-    shaderProgram.useTexture(gl, framebufferTextures.blurY);
-    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+    useTexture(gl, framebufferTextures.blurY);
+    shaderProgram.draw(bufferData.indicesBufferData.length);
   }
 
   {
     const bufferData = buffers.face;
     const shaderProgram = programInfos.addShader;
-    shaderProgram.use(gl);
+    shaderProgram.use();
     shaderProgram.attribSet({
       vertexPosition: bufferData.positionBufferData.buffer,
       textureCoord: bufferData.textureCoordinatesBufferData.buffer,
@@ -215,7 +215,7 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       samplerA: framebufferTextures.line.texture,
       samplerB: framebufferTextures.blurY.texture,
     });
-    shaderProgram.useTexture(gl);
-    shaderProgram.draw(gl, bufferData.indicesBufferData.length);
+    useTexture(gl);
+    shaderProgram.draw(bufferData.indicesBufferData.length);
   }
 }

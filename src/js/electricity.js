@@ -1,5 +1,4 @@
 import { Vector } from "./vector";
-import { Point } from "./point";
 import { numberCrop, randomSeedList } from "./base.js";
 class ElectricityData {
   constructor(segmentNum) {
@@ -152,7 +151,7 @@ class ElectricityData {
     let posList = new Array(data.length);
     let angle = Math.atan2(p1[1] - p0[1], p1[0] - p0[0]);
     for (let i = 0, len = data.length; i < len; i++) {
-      posList[i] = Point.addVector(Vector.rotate(data[i], angle), Point.toPosRate(p0, p1, i / (len - 1)));
+      posList[i] = Vector.add(Vector.rotate(data[i], angle), Vector.mix(p0, p1, i / (len - 1)));
     }
     return posList;
   }
