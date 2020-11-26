@@ -167,11 +167,11 @@ void main()
   vec2 branchStartPos=uBranchStartPos/uSize.y;
   vec2 branchEndPos=uBranchEndPos/uSize.y;
   float lineWidth=uLineWidth/uSize.y;
-  float d=distLine(coord,startPos,endPos,1.);
+  float d=distLine(coord,startPos,endPos,uSize.x/uSize.y);
   float len=distance(startPos,endPos);
-  float d1=distLine(coord,branchStartPos,branchEndPos,1.);
+  float d1=distLine(coord,branchStartPos,branchEndPos,uSize.x/uSize.y);
   float len1=distance(branchStartPos,branchEndPos);
-  if(d<max(len,.33)||(uBranchBool&&d1<max(len1,.33))){
+  if(d<max(len,.333)||(uBranchBool&&d1<max(len1,.333))){
     
     {
       float gradualVal=gradual(coord,startPos,endPos);
