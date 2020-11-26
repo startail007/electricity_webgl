@@ -30,8 +30,8 @@ float random(vec2 p,vec2 loop){
   if(loop.y!=0.){
     p.y=mod(p.y,loop.y);
   }
-  float f=dot(p,vec2(127.1,311.7));
-  return-1.+2.*fract(sin(f)*43758.5453123);
+  float f=dot(p,vec2(1.271,3.117));
+  return-1.+2.*fract(sin(f)*437.585453123);
 }
 
 float noise_value(vec2 p,vec2 loop){

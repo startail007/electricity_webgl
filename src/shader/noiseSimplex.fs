@@ -18,10 +18,10 @@ const int OCTAVE_NUM=3;
 }*/
 vec2 random2(vec2 p){
   vec2 f=vec2(
-    dot(p,vec2(127.1,311.7)),
-    dot(p,vec2(269.5,183.3))
+    dot(p,vec2(1.271,3.117)),
+    dot(p,vec2(2.695,1.833))
   );
-  return-1.+2.*fract(sin(f)*43758.5453123);
+  return-1.+2.*fract(sin(f)*437.585453123);
 }
 /*float random(vec2 p){
   float f=dot(p,vec2(127.1,311.7));
