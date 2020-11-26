@@ -63,7 +63,7 @@ float fbm_abs_noise_perlin(vec3 p,vec3 loop){
   return f;
 }
 
-float aaa(vec2 p){
+/*float aaa(vec2 p){
   return texture2D(uSampler,fract(p)).b;
 }
 float fbm_aaa(vec2 p){
@@ -75,16 +75,16 @@ float fbm_aaa(vec2 p){
     a/=2.;
   }
   return f;
-}
+}*/
 void main()
 {
   vec3 uv=(vec3(vTextureCoord,0.)+uPos)*uGrid;
   //float f=fbm_abs_noise_perlin(vec3(uv))*.5+.5;
-  //float f=fbm_abs_noise_perlin(uv*.1,uLoop)*.5+.5;
+  float f=fbm_abs_noise_perlin(uv,uLoop)*.5+.5;
   //float f=noise_perlin(uv,uLoop)*.5+.5;
-  float f=fbm_aaa(vTextureCoord*2.);
-  gl_FragColor=vec4(vec3(f),1.);
-  //gl_FragColor=vec4(vec3(1.5*f,1.5*f*f*f,f*f*f*f*f*f),1.);
+  //float f=fbm_aaa(vTextureCoord*2.);
+  //gl_FragColor=vec4(vec3(f),1.);
+  gl_FragColor=vec4(vec3(1.5*f,1.5*f*f*f,f*f*f*f*f*f),1.);
   
 }
 
