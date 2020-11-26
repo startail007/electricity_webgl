@@ -1,6 +1,6 @@
-precision mediump float;
+precision highp float;
 varying vec2 vTextureCoord;
-uniform lowp vec2 uSize;
+uniform vec2 uSize;
 uniform float uTime;
 const float pi=3.14159265359;
 const int OCTAVE_NUM=3;
