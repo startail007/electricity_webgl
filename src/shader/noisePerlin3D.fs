@@ -69,7 +69,7 @@ vec2 random2(vec2 p){
     dot(p,vec2(269.5,183.3))
   );
   /*return-1.+2.*fract(sin(f)*43758.5453123);*/
-  return texture2D(uSampler,fract(sin(f))).rg*2.-1.;
+  return texture2D(uSampler,fract(f)).rg*2.-1.;
 }
 float noise_worley(vec2 p){
   vec2 i=floor(p);
