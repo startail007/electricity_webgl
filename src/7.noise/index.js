@@ -49,10 +49,25 @@ function faceBuffers(gl) {
 
 function main() {
   const canvas = document.querySelector("#glcanvas");
-  const gl = canvas.getContext("webgl", {
+  /*const gl = canvas.getContext("webgl", {
     //premultipliedAlpha: false,
     alpha: false,
   });
+  if (!gl) {
+    alert("無法初始化WebGL。您的瀏覽器或機器可能不支持它。");
+    return;
+  }*/
+  const options = {
+    //premultipliedAlpha: false,
+    alpha: false,
+    //antialias: true,
+  };
+  let gl = canvas.getContext("webgl2", options);
+  let isWebGL2 = true;
+  if (!gl) {
+    gl = canvas.getContext("webgl", options) || canvas.getContext("experimental-webgl", options);
+    isWebGL2 = false;
+  }
   if (!gl) {
     alert("無法初始化WebGL。您的瀏覽器或機器可能不支持它。");
     return;
