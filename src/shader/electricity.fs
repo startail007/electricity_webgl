@@ -212,7 +212,7 @@ void main()
       }
       
       float r=clamp(pow(.5*length(uSize)/len,2.),uLineWidth,uLineWidth*2.);
-      uv001*=uSize;
+      //uv001*=uSize;
       float gradualVal2=gradualVal;
       if(uBranchBool){
         gradualVal2=gradualVal1;
@@ -220,12 +220,12 @@ void main()
       r*=mix(1.-.5*sin(gradualVal2*pi),3.,clamp(10./len,0.,1.));
       
       if(uBranchBool){
-        color+=distLightLine(uv001,uBranchStartPos,uBranchEndPos,r);
+        color+=distLightLine(uv001,uBranchStartPos/uSize,uBranchEndPos/uSize,r/uSize.y);
       }else{
-        color+=distLightLine(uv001,uStartPos,uEndPos,r);
+        color+=distLightLine(uv001,uStartPos/uSize,uEndPos/uSize,r/uSize.y);
       }
       
-      if(uBranchBool){
+      /*if(uBranchBool){
         if(uStartFixed){
           color+=elBall(coord,uBranchStartPos,1./len1,uTime*3.);
         }
@@ -239,7 +239,7 @@ void main()
         if(uEndFixed){
           color+=elBall(coord,uEndPos,1./len,uTime*3.);
         }
-      }
+      }*/
     }
     
     /*if(uBranchBool){
