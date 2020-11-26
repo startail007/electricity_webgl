@@ -167,11 +167,11 @@ void main()
   vec2 branchStartPos=uBranchStartPos/uSize.y;
   vec2 branchEndPos=uBranchEndPos/uSize.y;
   float lineWidth=uLineWidth/uSize.y;
-  //float d=distLine(coord,startPos,endPos,1.);
+  float d=distLine(coord,startPos,endPos,1.);
   float len=distance(startPos,endPos);
-  //float d1=distLine(coord,branchStartPos,branchEndPos,1.);
+  float d1=distLine(coord,branchStartPos,branchEndPos,1.);
   float len1=distance(branchStartPos,branchEndPos);
-  //if(d<max(len,200.)||(uBranchBool&&d1<max(len1,200.))){
+  if(d<max(len,.33)||(uBranchBool&&d1<max(len1,.33))){
     
     {
       float gradualVal=gradual(coord,startPos,endPos);
@@ -234,7 +234,7 @@ void main()
           color+=elBall(coord,endPos,1./len,uTime*3.);
         }
       }
-    //}
+    }
     
     /*if(uBranchBool){
       if(uStartFixed){
