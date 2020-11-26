@@ -171,7 +171,7 @@ void main()
   float len=distance(startPos,endPos);
   float d1=distLine(coord,branchStartPos,branchEndPos,uSize.x/uSize.y);
   float len1=distance(branchStartPos,branchEndPos);
-  if(d<max(len,.333)||(uBranchBool&&d1<max(len1,.333))){
+  //if(d<max(len,.333)||(uBranchBool&&d1<max(len1,.333))){
     
     {
       float gradualVal=gradual(coord,startPos,endPos);
@@ -234,7 +234,7 @@ void main()
           color+=elBall(coord,endPos,1./len,uTime*3.);
         }
       }*/
-    }
+    //}
     
     /*if(uBranchBool){
       if(uStartFixed){
