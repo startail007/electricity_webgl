@@ -33,11 +33,11 @@ float gradual(vec2 p,vec2 a,vec2 b){
 }
 vec3 random3(vec3 p){
   vec3 f=vec3(
-    dot(p,vec3(127.1,311.7,69.5)),
-    dot(p,vec3(269.5,183.3,132.7)),
-    dot(p,vec3(247.3,108.5,96.5))
+    dot(p,vec3(1.271,3.117,.695)),
+    dot(p,vec3(2.695,1.833,1.327)),
+    dot(p,vec3(2.473,1.085,.965))
   );
-  return-1.+2.*fract(sin(f)*43758.5453123);
+  return-1.+2.*fract(sin(f)*437.585453123);
 }
 float noise_perlin(vec3 p){
   vec3 i=floor(p);
@@ -85,10 +85,10 @@ vec2 random2(vec2 p,vec2 loop){
     p.y=mod(p.y,loop.y);
   }
   vec2 f=vec2(
-    dot(p,vec2(127.1,311.7)),
-    dot(p,vec2(269.5,183.3))
+    dot(p,vec2(1.271,3.117)),
+    dot(p,vec2(2.695,1.833))
   );
-  return-1.+2.*fract(sin(f)*43758.5453123);
+  return-1.+2.*fract(sin(f)*437.585453123);
 }
 
 float noise_perlin(vec2 p,vec2 loop){
