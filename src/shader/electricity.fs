@@ -219,7 +219,7 @@ void main()
         color+=distLightLine(uv001,startPos,endPos,r);
       }
       
-      if(uBranchBool){
+      /*if(uBranchBool){
         if(uStartFixed){
           color+=elBall(coord,branchStartPos,1./len1,uTime*3.);
         }
@@ -233,7 +233,7 @@ void main()
         if(uEndFixed){
           color+=elBall(coord,endPos,1./len,uTime*3.);
         }
-      }
+      }*/
     }
     
     /*if(uBranchBool){
