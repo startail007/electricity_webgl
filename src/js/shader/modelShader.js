@@ -13,6 +13,7 @@ const shader = (gl, vs, fs) => {
       projectionMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uProjectionMatrix"),
       modelViewMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uModelViewMatrix"),
       size: uniformFuns.uniform2fv(gl, shaderProgram, "uSize"),
+      wireframe: uniformFuns.uniform1i(gl, shaderProgram, "uWireframe"),
     },
   };
   return programInfo;

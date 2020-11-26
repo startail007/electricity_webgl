@@ -12,6 +12,7 @@ import quadraticCurveElectricityShader from "../js/shader/quadraticCurveElectric
 import viewShader from "../js/shader/viewShader";
 import blurShader from "../js/shader/blurShader";
 import addShader from "../js/shader/addShader";
+import image from "./image.jpg";
 import {
   getTextData,
   getNearestDistance,
@@ -61,13 +62,13 @@ const main = () => {
     alpha: false,
     //antialias: true,
   };
-  const gl = canvas.getContext("webgl", options);
-  /*let gl = canvas.getContext("webgl2", options);
+  //const gl = canvas.getContext("webgl", options);
+  let gl = canvas.getContext("webgl2", options);
   let isWebGL2 = true;
   if (!gl) {
     gl = canvas.getContext("webgl", options) || canvas.getContext("experimental-webgl", options);
     isWebGL2 = false;
-  }*/
+  }
   if (!gl) {
     alert("無法初始化WebGL。您的瀏覽器或機器可能不支持它。");
     return;
@@ -91,7 +92,7 @@ const main = () => {
     view: faceBuffers(gl),
   };
   //貼圖
-  const textures = { text: loadTexture(gl, textData.base64) };
+  const textures = { text: loadTexture(gl, textData.base64), image: loadTexture(gl, image) };
   //滑鼠位置
   const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
 
@@ -290,6 +291,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       textureCoord: bufferData.textureCoordinatesBufferData.buffer,
     });
     shaderProgram.uniformSet({
+      //sampler: textures.image,
       size: size,
       time: now * 0.001,
       flipY: -1,

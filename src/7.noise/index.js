@@ -4,6 +4,7 @@ import {
   createFramebufferTexture,
   getViewData,
   useTexture,
+  loadTexture,
 } from "../js/glSupply";
 import { Vector, VectorE } from "../js/vector";
 import noisePerlinShader from "../js/shader/noisePerlinShader";
@@ -12,6 +13,7 @@ import noiseValueShader from "../js/shader/noiseValueShader";
 import noiseWorleyShader from "../js/shader/noiseWorleyShader";
 import noisePerlin3DShader from "../js/shader/noisePerlin3DShader";
 import viewShader from "../js/shader/viewShader";
+import image from "./image.jpg";
 
 main();
 function faceBuffers(gl) {
@@ -68,7 +70,7 @@ function main() {
   //緩衝資料
   const buffers = { face: faceBuffers(gl), view: faceBuffers(gl) };
   //貼圖
-  const textures = {};
+  const textures = { image: loadTexture(gl, image) };
   //滑鼠位置
   const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
 
@@ -201,6 +203,7 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       pos: [0, 0, now * 0.00005],
       flipY: 1,
       loop: [20, 20, 20],
+      sampler: textures.image,
     });
     useTexture(gl, framebufferTextures.noisePerlin3D);
     shaderProgram.draw(bufferData.indicesBufferData.length);

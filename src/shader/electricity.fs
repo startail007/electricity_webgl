@@ -15,6 +15,7 @@ uniform vec2 uBranchEndPos;
 uniform float uBranchOffset;
 uniform bool uStartFixed;
 uniform bool uEndFixed;
+//uniform sampler2D uSampler;
 
 const float pi=3.14159265359;
 const int OCTAVE_NUM=5;
@@ -216,7 +217,7 @@ void main()
       if(uBranchBool){
         gradualVal2=gradualVal1;
       }
-      r*=mix((.5+.5*(1.-sin(gradualVal2*pi))),3.,clamp(10./len,0.,1.));
+      r*=mix(1.-.5*sin(gradualVal2*pi),3.,clamp(10./len,0.,1.));
       
       if(uBranchBool){
         color+=distLightLine(uv001,uBranchStartPos,uBranchEndPos,r);

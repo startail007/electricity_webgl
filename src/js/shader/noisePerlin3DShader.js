@@ -17,6 +17,7 @@ const shader = (gl, vs, fs) => {
       pos: uniformFuns.uniform3fv(gl, shaderProgram, "uPos"),
       type: uniformFuns.uniform1i(gl, shaderProgram, "uType"),
       loop: uniformFuns.uniform3fv(gl, shaderProgram, "uLoop"),
+      sampler: uniformFuns.uniformTexture(gl, shaderProgram, "uSampler", 0),
     },
   };
   return programInfo;

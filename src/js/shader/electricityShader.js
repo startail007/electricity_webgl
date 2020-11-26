@@ -25,6 +25,8 @@ const shader = (gl, vs, fs) => {
 
       startFixed: uniformFuns.uniform1i(gl, shaderProgram, "uStartFixed"),
       endFixed: uniformFuns.uniform1i(gl, shaderProgram, "uEndFixed"),
+
+      //sampler: uniformFuns.uniformTexture(gl, shaderProgram, "uSampler", 0),
     },
   };
   return programInfo;

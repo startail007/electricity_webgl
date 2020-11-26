@@ -175,8 +175,10 @@ const createAndSetupTexture = (gl) => {
 
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   return texture;
 };
 const loadTexture = (gl, url) => {
@@ -313,6 +315,9 @@ const shaderProgramFun = (gl, shader, vs, fs, drawFun) => {
         }
       }
     },
+    elementSet(val) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, val);
+    },
   };
 };
 const getViewData = (corner) => {
@@ -327,8 +332,8 @@ const clear = (gl) => {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 };
-const useTexture = (gl, texture, clearBool = true) => {
-  useFramebufferTexture(gl, texture);
+const useTexture = (gl, texture, clearBool = true, resize = true) => {
+  useFramebufferTexture(gl, texture, resize);
   if (clearBool) {
     clear(gl);
   }

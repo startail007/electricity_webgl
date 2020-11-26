@@ -6,6 +6,7 @@ uniform int uType;
 uniform vec3 uGrid;
 uniform vec3 uPos;
 uniform vec3 uLoop;
+uniform sampler2D uSampler;
 const float pi=3.14159265359;
 const int OCTAVE_NUM=3;
 
@@ -61,13 +62,53 @@ float fbm_abs_noise_perlin(vec3 p,vec3 loop){
   }
   return f;
 }
+
+vec2 random2(vec2 p){
+  vec2 f=vec2(
+    dot(p,vec2(127.1,311.7)),
+    dot(p,vec2(269.5,183.3))
+  );
+  /*return-1.+2.*fract(sin(f)*43758.5453123);*/
+  return texture2D(uSampler,fract(sin(f))).rg*2.-1.;
+}
+float noise_worley(vec2 p){
+  vec2 i=floor(p);
+  vec2 f=fract(p);
+  float F1=1.;
+  for(int j=-1;j<=1;j++){
+    for(int k=-1;k<=1;k++){
+      vec2 neighbor=vec2(float(j),float(k));
+      vec2 point=random2(i+neighbor)*.5+.5;
+      float d=length(point+neighbor-f);
+      F1=min(F1,d);
+    }
+  }
+  F1=F1*F1*(3.-2.*F1);
+  return F1;
+}
+float aaa(vec2 p){
+  return noise_worley(p);
+  //return texture2D(uSampler,fract(p)).b;
+}
+float fbm_aaa(vec2 p){
+  float f=0.;
+  float a=.5;
+  for(int i=0;i<2;i++){
+    f+=a*aaa(p);
+    p*=2.;
+    a/=2.;
+  }
+  return f;
+}
 void main()
 {
   vec3 uv=(vec3(vTextureCoord,0.)+uPos)*uGrid;
   //float f=fbm_abs_noise_perlin(vec3(uv))*.5+.5;
-  float f=fbm_abs_noise_perlin(uv,uLoop)*.5+.5;
-  //gl_FragColor=vec4(vec3(f),1.);
-  gl_FragColor=vec4(vec3(1.5*f,1.5*f*f*f,f*f*f*f*f*f),1.);
+  //float f=fbm_abs_noise_perlin(uv*.1,uLoop)*.5+.5;
+  //float f=noise_perlin(uv,uLoop)*.5+.5;
+  float f=noise_worley(vTextureCoord*20.);
+  gl_FragColor=vec4(vec3(f),1.);
+  //gl_FragColor=vec4(vec3(1.5*f,1.5*f*f*f,f*f*f*f*f*f),1.);
   
 }
 

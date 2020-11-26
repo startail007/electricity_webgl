@@ -1,4 +1,5 @@
 precision mediump float;
+uniform bool uWireframe;
 varying vec2 vTextureCoord;
 varying vec2 vSize;
 
@@ -30,11 +31,13 @@ vec4 distLightLine(vec2 p,vec2 a,vec2 b,float w){
 
 void main(void){
   vec4 color=vec4(0.);
-  vec2 aspectRatio=vec2(vSize.x/vSize.y,1.);
-  vec2 lineWidth=1./vSize;
-  if(vTextureCoord.x<lineWidth.x||vTextureCoord.x>1.-lineWidth.x||vTextureCoord.y<lineWidth.y||vTextureCoord.y>1.-lineWidth.y){
-    color+=.5*vec4(1.,0.,0.,1.);
+  if(uWireframe){
+    vec2 lineWidth=1./vSize;
+    if(vTextureCoord.x<lineWidth.x||vTextureCoord.x>1.-lineWidth.x||vTextureCoord.y<lineWidth.y||vTextureCoord.y>1.-lineWidth.y){
+      color+=.5*vec4(1.,0.,0.,1.);
+    }
   }
+  vec2 aspectRatio=vec2(vSize.x/vSize.y,1.);
   
   vec2 coord=vTextureCoord*aspectRatio;
   vec2 startPos=vec2(0.,.5)*aspectRatio+vec2(aspectRatio.y*.5,0.);

@@ -22,7 +22,10 @@ const shader = (gl, vs, fs) => {
       endFixed: uniformFuns.uniform1f(gl, shaderProgram, "uEndFixed"),
       startRadius: uniformFuns.uniform1f(gl, shaderProgram, "uStartRadius"),
       endRadius: uniformFuns.uniform1f(gl, shaderProgram, "uEndRadius"),
-      lineWidth: uniformFuns.uniform1f(gl, shaderProgram, "ulineWidth"),
+      startlineWidth: uniformFuns.uniform1f(gl, shaderProgram, "uStartlineWidth"),
+      endlineWidth: uniformFuns.uniform1f(gl, shaderProgram, "uEndlineWidth"),
+      offset: uniformFuns.uniform1f(gl, shaderProgram, "uOffset"),
+      wireframe: uniformFuns.uniform1i(gl, shaderProgram, "uWireframe"),
     },
   };
   return programInfo;
