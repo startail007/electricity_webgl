@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 varying vec2 vTextureCoord;
 uniform vec2 uSize;
 uniform float uTime;
@@ -167,102 +167,74 @@ void main()
   vec2 branchStartPos=uBranchStartPos/uSize.y;
   vec2 branchEndPos=uBranchEndPos/uSize.y;
   float lineWidth=uLineWidth/uSize.y;
-  float d=distLine(coord,startPos,endPos,uSize.x/uSize.y);
+  //float d=distLine(coord,startPos,endPos,uSize.x/uSize.y);
   float len=distance(startPos,endPos);
-  float d1=distLine(coord,branchStartPos,branchEndPos,uSize.x/uSize.y);
+  //float d1=distLine(coord,branchStartPos,branchEndPos,uSize.x/uSize.y);
   float len1=distance(branchStartPos,branchEndPos);
   //if(d<max(len,.333)||(uBranchBool&&d1<max(len1,.333))){
     
-    {
-      float gradualVal=gradual(coord,startPos,endPos);
-      float swing=sin(gradualVal*pi);
-      swing=1.-pow(1.-swing,2.);
-      
-      float gradualVal1=0.;
-      float branchSwing=0.;
-      if(uBranchBool){
-        gradualVal1=gradual(coord,branchStartPos,branchEndPos);
-        branchSwing=sin(gradualVal1*pi);
-        branchSwing=1.-pow(1.-branchSwing,2.);
-        if(!uStartFixed&&uEndFixed){
-          swing=mix(swing,branchSwing,gradualVal1);
-        }else if(uStartFixed&&!uEndFixed){
-          swing=mix(swing,branchSwing,1.-gradualVal1);
-        }else if(!uStartFixed&&!uEndFixed){
-          swing=mix(swing,branchSwing,branchSwing);
-        }else{
-          swing=mix(swing,branchSwing,1.-branchSwing);
-        }
-      }
-      
-      vec2 uv001=vTextureCoord*aspectRatio;
-      if(swing!=0.){
-        uv001+=swing*swingFun(1.2*uv001*aspectRatio,startPos,endPos,1.2*len,uOffset,uTime*3.);
-        if(uBranchBool){
-          if(branchSwing!=0.){
-            uv001+=gradualVal1*branchSwing*swingFun(1.2*uv001*aspectRatio,branchStartPos,branchEndPos,1.2*len1,uBranchOffset,uTime*3.);
-          }
-        }
-      }
-      
-      float r=clamp(pow(.5*length(1.5)/len,2.),lineWidth,lineWidth*2.);
-      //uv001*=uSize;
-      float gradualVal2=gradualVal;
-      if(uBranchBool){
-        gradualVal2=gradualVal1;
-      }
-      r*=mix(1.-.5*sin(gradualVal2*pi),3.,clamp(.01/len,0.,1.));
-      
-      if(uBranchBool){
-        color+=distLightLine(uv001,branchStartPos,branchEndPos,r);
+    float gradualVal=gradual(coord,startPos,endPos);
+    float swing=sin(gradualVal*pi);
+    swing=1.-pow(1.-swing,2.);
+    
+    float gradualVal1=0.;
+    float branchSwing=0.;
+    if(uBranchBool){
+      gradualVal1=gradual(coord,branchStartPos,branchEndPos);
+      branchSwing=sin(gradualVal1*pi);
+      branchSwing=1.-pow(1.-branchSwing,2.);
+      if(!uStartFixed&&uEndFixed){
+        swing=mix(swing,branchSwing,gradualVal1);
+      }else if(uStartFixed&&!uEndFixed){
+        swing=mix(swing,branchSwing,1.-gradualVal1);
+      }else if(!uStartFixed&&!uEndFixed){
+        swing=mix(swing,branchSwing,branchSwing);
       }else{
-        color+=distLightLine(uv001,startPos,endPos,r);
+        swing=mix(swing,branchSwing,1.-branchSwing);
       }
-      
-      /*if(uBranchBool){
-        if(uStartFixed){
-          color+=elBall(coord,branchStartPos,1./len1,uTime*3.);
+    }
+    
+    vec2 uv001=vTextureCoord*aspectRatio;
+    if(swing!=0.){
+      uv001+=swing*swingFun(1.2*uv001*aspectRatio,startPos,endPos,1.2*len,uOffset,uTime*3.);
+      if(uBranchBool){
+        if(branchSwing!=0.){
+          uv001+=gradualVal1*branchSwing*swingFun(1.2*uv001*aspectRatio,branchStartPos,branchEndPos,1.2*len1,uBranchOffset,uTime*3.);
         }
-        if(uEndFixed){
-          color+=elBall(coord,branchEndPos,1./len1,uTime*3.);
-        }
-      }else{
-        if(uStartFixed){
-          color+=elBall(coord,startPos,1./len,uTime*3.);
-        }
-        if(uEndFixed){
-          color+=elBall(coord,endPos,1./len,uTime*3.);
-        }
-      }*/
-    //}
+      }
+    }
+    float r=.005;
+    /*float r=clamp(pow(.5*length(1.5)/len,2.),lineWidth,lineWidth*2.);
+    float gradualVal2=gradualVal;
+    if(uBranchBool){
+      gradualVal2=gradualVal1;
+    }
+    r*=mix(1.-.5*sin(gradualVal2*pi),3.,clamp(.01/len,0.,1.));*/
+    
+    
+    if(uBranchBool){
+      color+=distLightLine(uv001,branchStartPos,branchEndPos,r);
+    }else{
+      color+=distLightLine(uv001,startPos,endPos,r);
+    }
     
     /*if(uBranchBool){
       if(uStartFixed){
-        color+=elBall(coord,branchStartPos,len1*.02,-uTime*3.);
+        color+=elBall(coord,branchStartPos,1./len1,uTime*3.);
       }
       if(uEndFixed){
-        color+=elBall(coord,branchEndPos,len1*.02,uTime*3.);
+        color+=elBall(coord,branchEndPos,1./len1,uTime*3.);
       }
     }else{
       if(uStartFixed){
-        color+=elBall(coord,startPos,len*.02,-uTime*3.);
+        color+=elBall(coord,startPos,1./len,uTime*3.);
       }
       if(uEndFixed){
-        color+=elBall(coord,endPos,len*.02,uTime*3.);
+        color+=elBall(coord,endPos,1./len,uTime*3.);
       }
     }*/
-    /*{
-      vec2 uv=coord-endPos;
-      float len=length(uv);
-      float noise0=abs(noise_perlin(vec2((20.*(.5*atan(uv.y,uv.x)/pi+.5)),len/20.-uTime*5.),vec2(20.,0.)));
-      float noise1=abs(noise_perlin(vec2((20.*(.5*atan(uv.y,uv.x)/pi+.5)),len/20.-uTime*5.+1.),vec2(20.,0.)));
-      float a0=smoothstep(.05,0.,noise0);
-      float a1=smoothstep(.05,0.,noise1);
-      float baseColorRate=smoothstep(1.,0.,len/100.);
-      color+=max((a0+a1*baseColorRate)-1.,0.)*pow(baseColorRate,2.)*vec4(.5,1.,1.,0.);
-    }*/
     
-  }
+  //}
   
   gl_FragColor=color;
 }

@@ -1,4 +1,5 @@
-precision mediump float;
+precision highp float;
+precision highp sampler2D;
 varying vec2 vTextureCoord;
 varying vec2 vPos;
 varying vec2 vSize;

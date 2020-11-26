@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 uniform bool uWireframe;
 varying vec2 vTextureCoord;
 varying vec2 vSize;
