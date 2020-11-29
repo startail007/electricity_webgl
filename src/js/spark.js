@@ -21,11 +21,11 @@ class Spark {
       Math.cos(this.options.direct) * this.options.velocity,
       Math.sin(this.options.direct) * this.options.velocity,
     ];
-    this.lifespan = Math.round(this.options.lifespan);
+    this.lifespan = this.options.lifespan;
     this.maxlife = this.lifespan;
     this.swing = Math.random();
   }
-  update() {
+  update(delta) {
     VectorE.set(this.prevPos, ...this.pos);
     VectorE.add(this.pos, this.velocityPos);
     const swingV = [0, Math.sin(this.swing * 2 * Math.PI)];
@@ -36,7 +36,9 @@ class Spark {
     VectorE.scale(this.velocityPos, this.options.friction);
     this.swing += 0.07;
     this.swing %= 1;
-    this.lifespan > 0 && this.lifespan--;
+    if (this.lifespan > 0) {
+      this.lifespan -= delta;
+    }
   }
   setColor(colorEnd, colorStart) {
     if (colorStart) {

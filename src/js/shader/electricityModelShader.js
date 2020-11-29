@@ -12,19 +12,24 @@ const shader = (gl, vs, fs) => {
     uniformLocations: {
       projectionMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uProjectionMatrix"),
       modelViewMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uModelViewMatrix"),
-      sampler: uniformFuns.uniformTexture(gl, shaderProgram, "uSampler", 0),
+      noiseSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uNoiseSampler", 0),
+      gradientColorSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uGradientColorSampler", 1),
       mouse: uniformFuns.uniform2fv(gl, shaderProgram, "uMouse"),
       length: uniformFuns.uniform1f(gl, shaderProgram, "uLength"),
       time: uniformFuns.uniform1f(gl, shaderProgram, "uTime"),
-      startDensity: uniformFuns.uniform1f(gl, shaderProgram, "uStartDensity"),
-      endDensity: uniformFuns.uniform1f(gl, shaderProgram, "uEndDensity"),
-      startFixed: uniformFuns.uniform1f(gl, shaderProgram, "uStartFixed"),
-      endFixed: uniformFuns.uniform1f(gl, shaderProgram, "uEndFixed"),
-      startRadius: uniformFuns.uniform1f(gl, shaderProgram, "uStartRadius"),
-      endRadius: uniformFuns.uniform1f(gl, shaderProgram, "uEndRadius"),
-      startlineWidth: uniformFuns.uniform1f(gl, shaderProgram, "uStartlineWidth"),
-      endlineWidth: uniformFuns.uniform1f(gl, shaderProgram, "uEndlineWidth"),
+      density: uniformFuns.uniform2fv(gl, shaderProgram, "uDensity"),
+      fixed: uniformFuns.uniform2fv(gl, shaderProgram, "uFixed"),
+      radius: uniformFuns.uniform2fv(gl, shaderProgram, "uRadius"),
+      lineWidth: uniformFuns.uniform2fv(gl, shaderProgram, "uLineWidth"),
       offset: uniformFuns.uniform1f(gl, shaderProgram, "uOffset"),
+      power: uniformFuns.uniform1f(gl, shaderProgram, "uPower"),
+
+      sub: uniformFuns.uniform1i(gl, shaderProgram, "uSub"),
+
+      flow: uniformFuns.uniform1i(gl, shaderProgram, "uFlow"),
+      flowSegment: uniformFuns.uniform1f(gl, shaderProgram, "uFlowSegment"),
+      flowRate: uniformFuns.uniform1f(gl, shaderProgram, "uFlowRate"),
+
       wireframe: uniformFuns.uniform1i(gl, shaderProgram, "uWireframe"),
     },
   };

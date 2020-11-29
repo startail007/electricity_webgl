@@ -1,5 +1,6 @@
 import { Vector } from "./vector";
-import { numberCrop, randomSeedList } from "./base.js";
+import { Float } from "./float.js";
+import { randomSeedList } from "./base.js";
 class ElectricityData {
   constructor(segmentNum) {
     this.segmentNum = segmentNum;
@@ -44,7 +45,7 @@ class ElectricityData {
   limitSegmentAngle(limit) {
     let data = this.segmentAngle;
     for (let i = 0, len = data.length; i < len; i++) {
-      data[i] = numberCrop(data[i], -limit, limit);
+      data[i] = Float.clamp(data[i], -limit, limit);
     }
   }
   balanceSegmentAngle() {

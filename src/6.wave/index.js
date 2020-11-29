@@ -41,7 +41,9 @@ function main0() {
   for (let i = 0; i < 800; i++) {
     const angle = (i / len) * 2 * Math.PI + 0.5 * Math.PI;
     //const point = Vector.add([i, 100], [0, -r + r * Math.exp(Math.pow(Math.abs(Math.sin(-0.5 * angle)), 2.5))]);
-    const point = Vector.add([i, 100], [0, -r + r * 2 * Math.pow(Math.exp(2 * Math.sin(angle)) / Math.exp(2), 0.75)]);
+    //const point = Vector.add([i, 100], [0, -r + r * 2 * Math.pow(Math.exp(2 * Math.sin(angle)) / Math.exp(2), 0.75)]);
+    const point = Vector.add([i, 100], [0, r * Math.sin(angle - 0.5 * Math.cos(angle))]);
+
     if (i === 0) {
       ctx.moveTo(...point);
     } else {

@@ -1,22 +1,26 @@
 precision highp float;
 precision highp sampler2D;
 varying vec2 vTextureCoord;
-varying vec2 vPos;
 varying vec2 vSize;
 varying vec2 vDir;
-varying float vStartRadius;
-varying float vEndRadius;
-varying float vStartlineWidth;
-varying float vEndlineWidth;
+varying vec2 vRadius;
+varying vec2 vLineWidth;
 varying float vOffset;
 
-uniform sampler2D uSampler;
+uniform sampler2D uNoiseSampler;
+uniform sampler2D uGradientColorSampler;
 uniform vec2 uMouse;
 uniform float uTime;
-uniform float uStartDensity;
-uniform float uEndDensity;
-uniform float uStartFixed;
-uniform float uEndFixed;
+uniform vec2 uDensity;
+uniform vec2 uFixed;
+uniform float uPower;
+
+uniform bool uSub;
+
+uniform bool uFlow;
+uniform float uFlowSegment;
+uniform float uFlowRate;
+
 uniform bool uWireframe;
 
 const float pi=3.14159265359;
@@ -32,23 +36,28 @@ float distLine(vec2 p,vec2 a,vec2 b,float w){
   float t=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);
   return length(pa-ba*t)/w;
 }
-vec4 drawLight(float d){
-  float highColorRate=smoothstep(1.,0.,d);
-  float baseColorRate=smoothstep(1.,0.,d/2.);
-  float glowColorRate=smoothstep(1.,0.,d/4.);
-  float endColorRate=smoothstep(1.,0.,d/8.);
-  vec4 highColor=vec4(.69,.92,.86,1);
-  vec4 baseColor=vec4(.38,.85,.77,1);
-  vec4 glowColor=vec4(.21,.63,.67,1);
-  vec4 endColor=vec4(.2,.25,.91,1.);
-  vec4 color=mix(.5*baseColor,highColor,pow(highColorRate,4.))*endColorRate;
-  color=mix(.25*glowColor,color,pow(baseColorRate,2.))*endColorRate;
-  color=mix(.125*endColor,color,pow(glowColorRate,1.))*endColorRate;
-  return color;
+float drawLight(float d,float power){
+  float f=1.;
+  float a=1.;
+  const int N=3;
+  float maxF=pow(2.,float(N));
+  for(int i=0;i<N;i++){
+    a*=.5;
+    float colorRate=smoothstep(1.,0.,2.*a*d);
+    float rate=pow(colorRate,a*maxF);
+    f=mix(a,f,rate);
+  }
+  f*=power*smoothstep(1.,0.,d/maxF);
+  return f;
 }
-vec4 distLightLine(vec2 p,vec2 a,vec2 b,float w){
+vec4 distLightPoint(float d,float power,sampler2D gradientColorSampler){
+  float f=drawLight(d,power);
+  return vec4(f*texture2D(gradientColorSampler,vec2(f,0.)));
+}
+vec4 distLightLine(vec2 p,vec2 a,vec2 b,float w,float power,sampler2D gradientColorSampler){
   float d=distLine(p,a,b,w);
-  return drawLight(d);
+  float f=drawLight(d,power);
+  return vec4(f*texture2D(gradientColorSampler,vec2(f,0.)));
 }
 mat2 rotCoord(float a){
   float sin_factor=sin(a);
@@ -83,11 +92,109 @@ vec2 getQuadraticCurveTo(vec2 p0,vec2 p1,vec2 p2,float t){
 vec2 getQuadraticCurveToTangent(vec2 p0,vec2 p1,vec2 p2,float t){
   return 2.*t*(p0-p1*2.+p2)+2.*(-p0+p1);
 }
+/*float getLife(float time,vec4 timeSegment){
+  float sum=timeSegment.x+timeSegment.y+timeSegment.z+timeSegment.w;
+  time=mod(time,sum);
+  float count=0.;
+  if(time<count+timeSegment.x){
+    return 0.;
+  }
+  count+=timeSegment.x;
+  if(time<count+timeSegment.y){
+    //float rate=(time-count)/timeSegment.y;
+    float rate=smoothstep(count,count+timeSegment.y,time);
+    //rate=1.-sin((1.-rate)*.5*pi);
+    return.5*rate;
+  }
+  count+=timeSegment.y;
+  if(time<count+timeSegment.z){
+    return.5;
+  }
+  count+=timeSegment.z;
+  if(time<count+timeSegment.w){
+    //float rate=(time-count)/timeSegment.w;
+    float rate=smoothstep(count,count+timeSegment.w,time);
+    
+    //rate=sin(rate*.5*pi);
+    return.5+.5*rate;
+  }
+}*/
+
 void main(void){
   vec4 color=vec4(0.);
   
-  //float len=smoothstep(1.,0.,length(vPos-uMouse)/10.);
-  //color+=vec4(vec3(len),1.);
+  /*float len=smoothstep(1.,0.,length(gl_FragCoord.xy-uMouse)/10.);
+  color+=vec4(vec3(len),1.);*/
+  
+  vec2 aspectRatio=vec2(vSize.x/vSize.y,1.);
+  vec2 coord=vTextureCoord*aspectRatio;
+  vec2 startPos=(vec2(0.,.5)*aspectRatio+vec2(.5,0.));
+  vec2 endPos=(vec2(1.,.5)*aspectRatio-vec2(.5,0.));
+  float startR=vLineWidth.x/vSize.y;
+  float endR=vLineWidth.y/vSize.y;
+  float power=pow(uPower,.5);
+  
+  vec3 noise=getNoise(uNoiseSampler,gl_FragCoord.xy*.003,uTime,uDensity.x*.5,uDensity.y*.5);
+  
+  {
+    //主電流
+    float gradualVal=smoothstep(startPos.x,endPos.x,coord.x);
+    vec2 move=getMove(gradualVal,vDir,vRadius.x,vRadius.y,uFixed.x,uFixed.y,noise)/vSize.y;
+    coord+=move;
+    {
+      //光球
+      {
+        float rr=vLineWidth.x/vSize.y;
+        float d=length(coord-startPos)/rr;
+        color+=distLightPoint(d,1.,uGradientColorSampler);
+      }
+      {
+        float rr=vLineWidth.y/vSize.y;
+        float d=length(coord-endPos)/rr;
+        color+=distLightPoint(d,1.,uGradientColorSampler);
+      }
+    }
+    vec2 offset=getQuadraticCurveTo(vec2(0.,0.),vec2(.5,vOffset*2.),vec2(1.,0.),gradualVal);
+    coord+=offset.y*vec2(0.,-1.)/vSize.y;
+    
+    float r=mix(startR,endR,gradualVal)*power;
+    
+    color+=distLightLine(coord,startPos,endPos,r*(1.-.5*sin(gradualVal*pi)),power,uGradientColorSampler);
+  }
+  {
+    //子電流
+    if(uSub){
+      for(int i=0;i<2;i++){
+        vec3 noise0=getNoise(uNoiseSampler,gl_FragCoord.xy*.001,uTime*.75+float(i+1)*noise.z,max(uDensity.x*.5,.3),max(uDensity.y*.5,.3));
+        float startPosRate=cos(noise0.x)*.5+.5;
+        float endPosRate=sin(noise0.y)*.5+.5;
+        vec2 startPos0=mix(startPos,endPos,startPosRate);
+        vec2 endPos0=mix(startPos,endPos,endPosRate);
+        float gradualVal0=smoothstep(startPos0.x,endPos0.x,coord.x);
+        vec2 move0=sin(gradualVal0*pi)*getMove(gradualVal0,vDir,vRadius.x*.5+vLineWidth.x,vRadius.y*.5+vLineWidth.y,1.,1.,noise0)/vSize.y;
+        float r0=mix(mix(startR,endR,startPosRate),mix(startR,endR,endPosRate),gradualVal0)*.5*power;
+        r0*=1.-.5*sin(gradualVal0*pi);
+        color+=distLightLine(coord+move0,startPos0,endPos0,r0,power,uGradientColorSampler);
+      }
+    }
+  }
+  {
+    //流動
+    if(uFlow){
+      float s=uFlowSegment;
+      float rate=mix(-s-s,1.+s,uFlowRate);
+      vec2 startPos00=mix(startPos,endPos,rate);
+      vec2 endPos00=mix(startPos,endPos,s+rate);
+      float gradualVal00=smoothstep(startPos00.x,endPos00.x,coord.x);
+      
+      /*float angle=fract(gradualVal00+.5)*2.*pi+.5*pi;
+      color*=sin(angle-.5*cos(angle));*/
+      
+      color*=sin(gradualVal00*pi);
+    }
+  }
+  
+  //color=texture2D(uGradientColorSampler,vTextureCoord);
   
   if(uWireframe){
     vec2 lineWidth=1./vSize;
@@ -95,50 +202,7 @@ void main(void){
       color+=.5*vec4(1.,0.,0.,1.);
     }
   }
-  vec2 aspectRatio=vec2(vSize.x/vSize.y,1.);
-  vec2 coord=vTextureCoord*aspectRatio;
-  vec2 startPos=(vec2(0.,.5)*aspectRatio+vec2(.5,0.));
-  vec2 endPos=(vec2(1.,.5)*aspectRatio-vec2(.5,0.));
-  vec3 noise=getNoise(uSampler,vPos*.003,uTime,uStartDensity*.5,uEndDensity*.5);
-  //float gradualVal=gradual(coord,startPos,endPos);
-  float gradualVal=(coord.x-.5)/(aspectRatio.x-1.);
-  gradualVal=clamp(gradualVal,0.,1.);
-  
-  vec2 move=getMove(gradualVal,vDir,vStartRadius,vEndRadius,uStartFixed,uEndFixed,noise)/vSize.y;
-  coord+=move;
-  {
-    float rr=vStartlineWidth/vSize.y;
-    float d=length(coord-startPos)/rr;
-    color+=drawLight(d);
-  }
-  {
-    float rr=vStartlineWidth/vSize.y;
-    float d=length(coord-endPos)/rr;
-    color+=drawLight(d);
-  }
-  vec2 offset=getQuadraticCurveTo(vec2(0.,0.),vec2(.5,vOffset*2.),vec2(1.,0.),gradualVal);
-  coord+=offset.y*vec2(0.,-1.)/vSize.y;
-  
-  float startR=vStartlineWidth/vSize.y;
-  float endR=vEndlineWidth/vSize.y;
-  float r=mix(startR,endR,gradualVal);
-  
-  color+=distLightLine(coord,startPos,endPos,r*(1.-.5*sin(gradualVal*pi)));
-  
-  for(int i=0;i<2;i++){
-    vec3 noise0=getNoise(uSampler,vPos*.001,uTime*.75+float(i+1)*noise.z,max(uStartDensity*.5,.3),max(uEndDensity*.5,.3));
-    float startPosRate=cos(noise0.r)*.5+.5;
-    float endPosRate=sin(noise0.g)*.5+.5;
-    vec2 startPos0=mix(startPos,endPos,startPosRate);
-    vec2 endPos0=mix(startPos,endPos,endPosRate);
-    //float gradualVal0=gradual(coord,startPos0,endPos0);
-    float gradualVal0=clamp((coord.x-startPos0.x)/(endPos0.x-startPos0.x),0.,1.);
-    vec2 move0=sin(gradualVal0*pi)*getMove(gradualVal0,vDir,vStartRadius*1.+vStartlineWidth,vEndRadius*1.+vEndlineWidth,.7,.7,noise0)/vSize.y;
-    float r0=mix(mix(startR,endR,startPosRate),mix(startR,endR,endPosRate),gradualVal0)*.5;
-    r0*=1.-.5*sin(gradualVal0*pi);
-    color+=distLightLine(coord+move0,startPos0,endPos0,r0);
-  }
-  
   //color+=distLightLine(coord,mix(startPos,endPos,.5),mix(startPos,endPos,.5)+vec2(0.,.2),.01,1.5);
+  
   gl_FragColor=color;
 }

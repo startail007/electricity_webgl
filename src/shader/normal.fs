@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 varying vec2 vTextureCoord;
 uniform lowp vec2 uSize;
 uniform sampler2D uSampler;

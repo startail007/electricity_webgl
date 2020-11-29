@@ -1,5 +1,7 @@
 import { mat4 } from "gl-matrix";
-import image from "./image.jpg";
+import noise from "./noise.jpg";
+import gradientColor from "./gradientColor.jpg";
+
 import * as dat from "dat.gui";
 
 import {
@@ -10,13 +12,13 @@ import {
   loadTexture,
 } from "../js/glSupply";
 import { Vector, VectorE, getQuadraticCurveTo, getQuadraticCurveToTangent } from "../js/vector";
+import EasingFunctions from "../js/ease";
 import modelShader from "../js/shader/modelShader";
 import electricityModelShader from "../js/shader/electricityModelShader";
 import { Spark } from "../js/spark";
 import { Float } from "../js/float";
 
-main();
-function modelBuffers(gl) {
+const modelBuffers = (gl) => {
   const positions = [
     [-1.0, -1.0],
     [-1.0, 1.0],
@@ -32,8 +34,8 @@ function modelBuffers(gl) {
   ].flat();
   const textureCoordinatesBufferData = arrayBufferData(gl, textureCoordinates, 2);
   const indices = [
-    [1, 0, 2],
-    [1, 2, 3],
+    [1, 2, 0],
+    [1, 3, 2],
   ].flat();
   //const indicesBufferData = elementArrayBufferData(gl, indices, Uint32Array);
   //const indicesBufferData = elementArrayBufferData(gl, indices, Uint16Array);
@@ -44,8 +46,8 @@ function modelBuffers(gl) {
     textureCoordinatesBufferData: textureCoordinatesBufferData,
     indicesBufferData: indicesBufferData,
   };
-}
-function curveModelBuffers(gl) {
+};
+const curveModelBuffers = (gl) => {
   const getArrayMix = (N, fun) => {
     return new Array(N).fill(undefined).flatMap((el, index, array) => {
       const rate = index / (array.length - 1);
@@ -75,8 +77,8 @@ function curveModelBuffers(gl) {
   const indices = getArrayMix(N - 1, (rate, el, index) => {
     const i = index * 2;
     return [
-      [i + 1, i + 0, i + 2],
-      [i + 1, i + 2, i + 3],
+      [i + 1, i + 2, i + 0],
+      [i + 1, i + 3, i + 2],
     ];
   }).flat();
   //const indicesBufferData = elementArrayBufferData(gl, indices, Uint32Array);
@@ -88,9 +90,9 @@ function curveModelBuffers(gl) {
     textureCoordinatesBufferData: textureCoordinatesBufferData,
     indicesBufferData: indicesBufferData,
   };
-}
+};
 
-function main() {
+const main = () => {
   const canvas = document.querySelector("#glcanvas");
   const options = {
     //premultipliedAlpha: false,
@@ -116,7 +118,7 @@ function main() {
   //緩衝資料
   const buffers = { model: modelBuffers(gl), curveModel: curveModelBuffers(gl) };
   //貼圖
-  const textures = { image: loadTexture(gl, image) };
+  const textures = { noise: loadTexture(gl, noise), gradientColor: loadTexture(gl, gradientColor) };
   //滑鼠位置
   const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
 
@@ -132,7 +134,7 @@ function main() {
           mPos,
           2 + Math.random() * 14,
           Math.random() * 2 * Math.PI,
-          50 + Math.random() * 50,
+          0.25 + Math.random() * 0.25,
           2 + 3 * Math.random()
         )
       );
@@ -146,7 +148,7 @@ function main() {
           mPos,
           2 + Math.random() * 14,
           Math.random() * 2 * Math.PI,
-          50 + Math.random() * 50,
+          0.5 + Math.random() * 0.5,
           2 + 3 * Math.random()
         )
       );
@@ -175,19 +177,41 @@ function main() {
     drawScene(gl, programInfos, buffers, textures, { now, delta, mPos, framebufferTextures, size, particles, guiData });
   }
   requestAnimationFrame(render);
-}
+};
 
-function init(gl, programInfos, buffers, textures, datas) {
+const init = (gl, programInfos, buffers, textures, datas) => {
   const { framebufferTextures, size } = datas;
-}
-
-function drawScene(gl, programInfos, buffers, textures, datas) {
+};
+const getLife = (time, timeSegment) => {
+  const sum = timeSegment[0] + timeSegment[1] + timeSegment[2] + timeSegment[3];
+  time %= sum;
+  let count = 0;
+  if (time < count + timeSegment[0]) {
+    return 0;
+  }
+  count += timeSegment[0];
+  if (time < count + timeSegment[1]) {
+    const rate = Float.inverseMix(count, count + timeSegment[1], time);
+    return 0.5 * rate;
+  }
+  count += timeSegment[1];
+  if (time < count + timeSegment[2]) {
+    return 0.5;
+  }
+  count += timeSegment[2];
+  if (time < count + timeSegment[3]) {
+    const rate = Float.inverseMix(count, count + timeSegment[3], time);
+    return 0.5 + 0.5 * rate;
+  }
+};
+const drawScene = (gl, programInfos, buffers, textures, datas) => {
   const { now, delta, framebufferTextures, mPos, size, particles, guiData } = datas;
 
   const projectionMatrix = mat4.create();
   mat4.ortho(projectionMatrix, 0, gl.canvas.clientWidth, gl.canvas.clientHeight, 0, 0.1, 100);
   mat4.translate(projectionMatrix, projectionMatrix, [0.0, 0.0, -1.0]);
 
+  gl.enable(gl.CULL_FACE);
   gl.enable(gl.BLEND);
   //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.blendFunc(gl.ONE, gl.ONE);
@@ -205,9 +229,12 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
 
     shaderProgram.uniformSet({
       projectionMatrix: projectionMatrix,
-      mouse: mPos,
+      mouse: Vector.add(Vector.mul(mPos, [1, -1]), [0, size[1]]),
       time: now * 0.001,
       wireframe: guiData.wireframe,
+      noiseSampler: textures.noise,
+      gradientColorSampler: textures.gradientColor,
+      sub: true,
     });
     useTexture(gl, null, false);
     /*gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -225,21 +252,42 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
       shaderProgram.uniformSet({
         modelViewMatrix: modelViewMatrix,
-        startDensity: 0.6,
-        endDensity: 0.6,
-        startFixed: 1,
-        endFixed: 1,
-        startRadius: 20,
-        endRadius: 20,
-        startlineWidth: 20,
-        endlineWidth: 20,
+        density: [0.6, 0.6],
+        fixed: [1, 1],
+        radius: [40, 40],
+        lineWidth: [10, 10],
         length: Vector.length(v),
-        offset: 60,
+        offset: 0,
+        power: 1,
+        flow: true,
+        flowSegment: 2,
+        flowRate: getLife(now * 0.001, [0, 0.5, 0, 0.5]),
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     }
     {
-      const startPos = [250, 100 + 60];
+      const startPos = [100, 200];
+      const endPos = [400, 200];
+      const v = Vector.sub(endPos, startPos);
+      const a = Vector.getAngle(v);
+      mat4.identity(modelViewMatrix);
+      mat4.translate(modelViewMatrix, modelViewMatrix, [...Vector.mix(startPos, endPos, 0.5), 0.0]);
+      mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
+      shaderProgram.uniformSet({
+        modelViewMatrix: modelViewMatrix,
+        density: [0.6, 0.6],
+        fixed: [1, 1],
+        radius: [20, 20],
+        lineWidth: [20, 20],
+        length: Vector.length(v),
+        offset: 60,
+        power: 1,
+        flow: false,
+      });
+      shaderProgram.draw(bufferData.indicesBufferData.length);
+    }
+    {
+      const startPos = [250, 200 + 60];
       const endPos = [380, 400];
       const v = Vector.sub(endPos, startPos);
       const a = Vector.getAngle(v);
@@ -248,21 +296,19 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
       shaderProgram.uniformSet({
         modelViewMatrix: modelViewMatrix,
-        startDensity: 0.6,
-        endDensity: 0.3,
-        startFixed: 0.0,
-        endFixed: 0.7,
-        startRadius: 20,
-        endRadius: 30,
-        startlineWidth: 5,
-        endlineWidth: 5,
+        density: [0.6, 0.3],
+        fixed: [0.0, 0.9],
+        radius: [20, 30],
+        lineWidth: [5, 5],
         length: Vector.length(v),
         offset: -30,
+        power: 1,
+        flow: false,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     }
     {
-      const startPos = [250, 100 + 60];
+      const startPos = [250, 200 + 60];
       const endPos = [250, 400];
       const v = Vector.sub(endPos, startPos);
       const a = Vector.getAngle(v);
@@ -271,16 +317,14 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
       shaderProgram.uniformSet({
         modelViewMatrix: modelViewMatrix,
-        startDensity: 0.6,
-        endDensity: 0.3,
-        startFixed: 0,
-        endFixed: 0,
-        startRadius: 20,
-        endRadius: 30,
-        startlineWidth: 5,
-        endlineWidth: 5,
+        density: [0.6, 0.3],
+        fixed: [0, 0],
+        radius: [20, 30],
+        lineWidth: [5, 5],
         length: Vector.length(v),
         offset: 0,
+        power: 1,
+        flow: false,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     }
@@ -294,23 +338,21 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
       shaderProgram.uniformSet({
         modelViewMatrix: modelViewMatrix,
-        startDensity: 0.3,
-        endDensity: 0.3,
-        startFixed: 1,
-        endFixed: 1,
-        startRadius: 30,
-        endRadius: 30,
-        startlineWidth: 5,
-        endlineWidth: 5,
+        density: [0.3, 0.3],
+        fixed: [1, 1],
+        radius: [30, 30],
+        lineWidth: [5, 5],
         length: Vector.length(v),
         offset: 0,
+        power: 1,
+        flow: false,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     }
 
     {
-      const startPos = [100, 400];
-      const endPos = [100, 450];
+      const startPos = [250, 400];
+      const endPos = [250, 450];
       const v = Vector.sub(endPos, startPos);
       const a = Vector.getAngle(v);
       mat4.identity(modelViewMatrix);
@@ -318,16 +360,14 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
       shaderProgram.uniformSet({
         modelViewMatrix: modelViewMatrix,
-        startDensity: 0.75,
-        endDensity: 0.75,
-        startFixed: 1,
-        endFixed: 1,
-        startRadius: 30,
-        endRadius: 5,
-        startlineWidth: 5,
-        endlineWidth: 5,
+        density: [0.3, 0.75],
+        fixed: [0, 1],
+        radius: [30, 15],
+        lineWidth: [5, 5],
         length: Vector.length(v),
         offset: 0,
+        power: 1,
+        flow: false,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     }
@@ -350,13 +390,14 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
     shaderProgram.uniformSet({
       projectionMatrix: projectionMatrix,
       wireframe: guiData.wireframe,
+      gradientColorSampler: textures.gradientColor,
     });
 
     useTexture(gl, null, false);
     particles.forEach((el, i, ary) => {
       const startPos = el.prevPos;
       const endPos = el.pos;
-      const r = 30 * (el.lifespan / el.maxlife);
+      const lineWidth = 5 * EasingFunctions.easeOutQuad(el.lifespan / el.maxlife);
       const v = Vector.sub(endPos, startPos);
       const a = Vector.getAngle(v);
       mat4.identity(modelViewMatrix);
@@ -364,9 +405,10 @@ function drawScene(gl, programInfos, buffers, textures, datas) {
       mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
       shaderProgram.uniformSet({
         modelViewMatrix: modelViewMatrix,
-        size: [Vector.length(v) + r, r],
+        size: [Vector.length(v) + lineWidth * 2 * (1 + 8), lineWidth * 2 * (1 + 8)],
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     });
   }
-}
+};
+main();

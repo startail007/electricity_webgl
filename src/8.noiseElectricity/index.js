@@ -329,7 +329,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
     });
     shaderProgram.draw(bufferData.indicesBufferData.length);
 
-    electricityList.forEach((el, index, array) => {
+    /*electricityList.forEach((el, index, array) => {
       if (el.lifeTimeMax) {
         el.lifeTime--;
         if (el.lifeTime <= 0) {
@@ -384,7 +384,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
         }
         shaderProgram.draw(bufferData.indicesBufferData.length);
       }
-    });
+    });*/
   }
 };
 main();

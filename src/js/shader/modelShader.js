@@ -12,6 +12,7 @@ const shader = (gl, vs, fs) => {
     uniformLocations: {
       projectionMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uProjectionMatrix"),
       modelViewMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uModelViewMatrix"),
+      gradientColorSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uGradientColorSampler", 0),
       size: uniformFuns.uniform2fv(gl, shaderProgram, "uSize"),
       wireframe: uniformFuns.uniform1i(gl, shaderProgram, "uWireframe"),
     },
