@@ -1,4 +1,4 @@
-import { initShaderProgram, useFramebufferTexture, attribFuns, uniformFuns, shaderProgramFun } from "../glSupply";
+import { initShaderProgram, attribFuns, uniformFuns, shaderProgramFun } from "../glSupply";
 import vs from "../../shader/screen.vs";
 import fs from "../../shader/refract.fs";
 const shader = (gl, vs, fs) => {

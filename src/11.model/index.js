@@ -1,6 +1,7 @@
 import { mat4 } from "gl-matrix";
 import noise from "./noise.jpg";
 import gradientColor from "./gradientColor.jpg";
+import thicknessScale from "./thicknessScale.jpg";
 
 import * as dat from "dat.gui";
 
@@ -15,8 +16,10 @@ import { Vector, VectorE, getQuadraticCurveTo, getQuadraticCurveToTangent } from
 import EasingFunctions from "../js/ease";
 import modelShader from "../js/shader/modelShader";
 import electricityModelShader from "../js/shader/electricityModelShader";
+import electricityBranchModelShader from "../js/shader/electricityBranchModelShader";
 import { Spark } from "../js/spark";
 import { Float } from "../js/float";
+import { lagrangeInterpolation, lineInterpolation } from "../js/base";
 
 const modelBuffers = (gl) => {
   const positions = [
@@ -114,11 +117,16 @@ const main = () => {
   const programInfos = {
     modelShader: modelShader(gl),
     electricityModelShader: electricityModelShader(gl),
+    electricityBranchModelShader: electricityBranchModelShader(gl),
   };
   //緩衝資料
   const buffers = { model: modelBuffers(gl), curveModel: curveModelBuffers(gl) };
   //貼圖
-  const textures = { noise: loadTexture(gl, noise), gradientColor: loadTexture(gl, gradientColor) };
+  const textures = {
+    noise: loadTexture(gl, noise),
+    gradientColor: loadTexture(gl, gradientColor),
+    thicknessScale: loadTexture(gl, thicknessScale),
+  };
   //滑鼠位置
   const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
 
@@ -182,28 +190,7 @@ const main = () => {
 const init = (gl, programInfos, buffers, textures, datas) => {
   const { framebufferTextures, size } = datas;
 };
-const getLife = (time, timeSegment) => {
-  const sum = timeSegment[0] + timeSegment[1] + timeSegment[2] + timeSegment[3];
-  time %= sum;
-  let count = 0;
-  if (time < count + timeSegment[0]) {
-    return 0;
-  }
-  count += timeSegment[0];
-  if (time < count + timeSegment[1]) {
-    const rate = Float.inverseMix(count, count + timeSegment[1], time);
-    return 0.5 * rate;
-  }
-  count += timeSegment[1];
-  if (time < count + timeSegment[2]) {
-    return 0.5;
-  }
-  count += timeSegment[2];
-  if (time < count + timeSegment[3]) {
-    const rate = Float.inverseMix(count, count + timeSegment[3], time);
-    return 0.5 + 0.5 * rate;
-  }
-};
+
 const drawScene = (gl, programInfos, buffers, textures, datas) => {
   const { now, delta, framebufferTextures, mPos, size, particles, guiData } = datas;
 
@@ -234,6 +221,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       wireframe: guiData.wireframe,
       noiseSampler: textures.noise,
       gradientColorSampler: textures.gradientColor,
+      thicknessScaleSampler: textures.thicknessScale,
       sub: true,
     });
     useTexture(gl, null, false);
@@ -249,19 +237,49 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       const a = Vector.getAngle(v);
       mat4.identity(modelViewMatrix);
       mat4.translate(modelViewMatrix, modelViewMatrix, [...Vector.mix(startPos, endPos, 0.5), 0.0]);
+      /*const s = Vector.length(v);
+      mat4.scale(modelViewMatrix, modelViewMatrix, [s, 1, 1]);*/
       mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
+
+      const flowRateData = [
+        [0, 0],
+        [0.5, 0.5],
+        [1.5, 0.5],
+        [2, 1],
+      ];
+      const gradientColorRateData = [
+        [0, 1],
+        [0.8, 0],
+        [1.2, 0],
+        [2, 1],
+      ];
+      const thicknessScaleRateData = [
+        [0, 1],
+        [0.8, 0],
+        [1.2, 0],
+        [2, 1],
+      ];
       shaderProgram.uniformSet({
         modelViewMatrix: modelViewMatrix,
         density: [0.6, 0.6],
         fixed: [1, 1],
         radius: [40, 40],
-        lineWidth: [10, 10],
+        thickness: [10, 10],
+        borderPower: [1, 1],
         length: Vector.length(v),
         offset: 0,
         power: 1,
+        gradientColorRate: lineInterpolation(
+          gradientColorRateData,
+          (now * 0.001) % gradientColorRateData[gradientColorRateData.length - 1][0]
+        ),
+        thicknessScaleRate: lineInterpolation(
+          thicknessScaleRateData,
+          (now * 0.001) % thicknessScaleRateData[thicknessScaleRateData.length - 1][0]
+        ),
         flow: true,
         flowSegment: 2,
-        flowRate: getLife(now * 0.001, [0, 0.5, 0, 0.5]),
+        flowRate: lineInterpolation(flowRateData, (now * 0.001) % flowRateData[flowRateData.length - 1][0]),
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     }
@@ -278,10 +296,13 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
         density: [0.6, 0.6],
         fixed: [1, 1],
         radius: [20, 20],
-        lineWidth: [20, 20],
+        thickness: [20, 20],
+        borderPower: [1, 1],
         length: Vector.length(v),
         offset: 60,
         power: 1,
+        gradientColorRate: 0,
+        thicknessScaleRate: 0,
         flow: false,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
@@ -299,10 +320,13 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
         density: [0.6, 0.3],
         fixed: [0.0, 0.9],
         radius: [20, 30],
-        lineWidth: [5, 5],
+        thickness: [5, 5],
+        borderPower: [1, 1],
         length: Vector.length(v),
         offset: -30,
         power: 1,
+        gradientColorRate: 0,
+        thicknessScaleRate: 0,
         flow: false,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
@@ -320,10 +344,13 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
         density: [0.6, 0.3],
         fixed: [0, 0],
         radius: [20, 30],
-        lineWidth: [5, 5],
+        thickness: [5, 5],
+        borderPower: [1, 1],
         length: Vector.length(v),
         offset: 0,
         power: 1,
+        gradientColorRate: 0,
+        thicknessScaleRate: 0,
         flow: false,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
@@ -341,10 +368,13 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
         density: [0.3, 0.3],
         fixed: [1, 1],
         radius: [30, 30],
-        lineWidth: [5, 5],
+        thickness: [5, 5],
+        borderPower: [1, 1],
         length: Vector.length(v),
         offset: 0,
         power: 1,
+        gradientColorRate: 0,
+        thicknessScaleRate: 0,
         flow: false,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
@@ -363,11 +393,56 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
         density: [0.3, 0.75],
         fixed: [0, 1],
         radius: [30, 15],
-        lineWidth: [5, 5],
+        thickness: [5, 5],
+        borderPower: [1, 1],
         length: Vector.length(v),
         offset: 0,
         power: 1,
+        gradientColorRate: 0,
+        thicknessScaleRate: 0,
         flow: false,
+      });
+      shaderProgram.draw(bufferData.indicesBufferData.length);
+    }
+  }
+
+  {
+    const bufferData = buffers.model;
+    const shaderProgram = programInfos.electricityBranchModelShader;
+    shaderProgram.use();
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.elementSet(bufferData.indicesBufferData.buffer);
+
+    shaderProgram.uniformSet({
+      projectionMatrix: projectionMatrix,
+      mouse: Vector.add(Vector.mul(mPos, [1, -1]), [0, size[1]]),
+      time: now * 0.001,
+      wireframe: guiData.wireframe,
+      noiseSampler: textures.noise,
+      gradientColorSampler: textures.gradientColor,
+      sub: true,
+    });
+    useTexture(gl, null, false);
+    {
+      const startPos = [500, 100];
+      const endPos = [700, 100];
+      const v = Vector.sub(endPos, startPos);
+      const a = Vector.getAngle(v);
+      mat4.identity(modelViewMatrix);
+      mat4.translate(modelViewMatrix, modelViewMatrix, [...Vector.mix(startPos, endPos, 0.5), 0.0]);
+      mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
+      shaderProgram.uniformSet({
+        modelViewMatrix: modelViewMatrix,
+        density: [0.6, 0.6],
+        fixed: [1, 1],
+        radius: [40, 40],
+        thickness: [10, 10],
+        length: Vector.length(v),
+        offset: 0,
+        power: 1,
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     }
@@ -397,7 +472,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
     particles.forEach((el, i, ary) => {
       const startPos = el.prevPos;
       const endPos = el.pos;
-      const lineWidth = 5 * EasingFunctions.easeOutQuad(el.lifespan / el.maxlife);
+      const thickness = 5 * EasingFunctions.easeOutQuad(el.lifespan / el.maxlife);
       const v = Vector.sub(endPos, startPos);
       const a = Vector.getAngle(v);
       mat4.identity(modelViewMatrix);
@@ -405,7 +480,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
       shaderProgram.uniformSet({
         modelViewMatrix: modelViewMatrix,
-        size: [Vector.length(v) + lineWidth * 2 * (1 + 8), lineWidth * 2 * (1 + 8)],
+        size: [Vector.length(v) + thickness * 2 * (1 + 8), thickness * 2 * (1 + 8)],
       });
       shaderProgram.draw(bufferData.indicesBufferData.length);
     });

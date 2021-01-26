@@ -1,6 +1,6 @@
 import { Vector } from "./vector";
-import { Float } from "./float.js";
-import { randomSeedList } from "./base.js";
+import { Float } from "./float";
+import { randomSeedList } from "./base";
 class ElectricityData {
   constructor(segmentNum) {
     this.segmentNum = segmentNum;

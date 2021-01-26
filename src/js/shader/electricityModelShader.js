@@ -1,4 +1,4 @@
-import { initShaderProgram, useFramebufferTexture, attribFuns, uniformFuns, shaderProgramFun } from "../glSupply";
+import { initShaderProgram, attribFuns, uniformFuns, shaderProgramFun } from "../glSupply";
 import vs from "../../shader/electricityModel.vs";
 import fs from "../../shader/electricityModel.fs";
 const shader = (gl, vs, fs) => {
@@ -12,25 +12,29 @@ const shader = (gl, vs, fs) => {
     uniformLocations: {
       projectionMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uProjectionMatrix"),
       modelViewMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uModelViewMatrix"),
-      noiseSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uNoiseSampler", 0),
-      gradientColorSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uGradientColorSampler", 1),
+      noiseSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uNoiseSampler", 0), //噪聲貼圖
+      gradientColorSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uGradientColorSampler", 1), //漸層色貼圖
+      thicknessScaleSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uThicknessScaleSampler", 2), //線段粗細貼圖
       mouse: uniformFuns.uniform2fv(gl, shaderProgram, "uMouse"),
-      length: uniformFuns.uniform1f(gl, shaderProgram, "uLength"),
-      time: uniformFuns.uniform1f(gl, shaderProgram, "uTime"),
-      density: uniformFuns.uniform2fv(gl, shaderProgram, "uDensity"),
-      fixed: uniformFuns.uniform2fv(gl, shaderProgram, "uFixed"),
-      radius: uniformFuns.uniform2fv(gl, shaderProgram, "uRadius"),
-      lineWidth: uniformFuns.uniform2fv(gl, shaderProgram, "uLineWidth"),
-      offset: uniformFuns.uniform1f(gl, shaderProgram, "uOffset"),
-      power: uniformFuns.uniform1f(gl, shaderProgram, "uPower"),
+      length: uniformFuns.uniform1f(gl, shaderProgram, "uLength"), //線段長度
+      time: uniformFuns.uniform1f(gl, shaderProgram, "uTime"), //時間
+      density: uniformFuns.uniform2fv(gl, shaderProgram, "uDensity"), //扭曲的質量
+      fixed: uniformFuns.uniform2fv(gl, shaderProgram, "uFixed"), //頭尾固定
+      radius: uniformFuns.uniform2fv(gl, shaderProgram, "uRadius"), //扭曲的半徑範圍
+      thickness: uniformFuns.uniform2fv(gl, shaderProgram, "uThickness"), //線段粗細
+      offset: uniformFuns.uniform1f(gl, shaderProgram, "uOffset"), //偏移位置(貝茲曲線)
+      power: uniformFuns.uniform1f(gl, shaderProgram, "uPower"), //中間電流能量
+      borderPower: uniformFuns.uniform2fv(gl, shaderProgram, "uBorderPower"), //頭尾球狀能量
+      gradientColorRate: uniformFuns.uniform1f(gl, shaderProgram, "uGradientColorRate"), //漸層色位置
+      thicknessScaleRate: uniformFuns.uniform1f(gl, shaderProgram, "uThicknessScaleRate"), //線段粗細位置
 
-      sub: uniformFuns.uniform1i(gl, shaderProgram, "uSub"),
+      sub: uniformFuns.uniform1i(gl, shaderProgram, "uSub"), //子電流
 
-      flow: uniformFuns.uniform1i(gl, shaderProgram, "uFlow"),
-      flowSegment: uniformFuns.uniform1f(gl, shaderProgram, "uFlowSegment"),
-      flowRate: uniformFuns.uniform1f(gl, shaderProgram, "uFlowRate"),
+      flow: uniformFuns.uniform1i(gl, shaderProgram, "uFlow"), //流動開關
+      flowSegment: uniformFuns.uniform1f(gl, shaderProgram, "uFlowSegment"), //流動段長度
+      flowRate: uniformFuns.uniform1f(gl, shaderProgram, "uFlowRate"), //流動段位置
 
-      wireframe: uniformFuns.uniform1i(gl, shaderProgram, "uWireframe"),
+      wireframe: uniformFuns.uniform1i(gl, shaderProgram, "uWireframe"), //外框
     },
   };
   return programInfo;

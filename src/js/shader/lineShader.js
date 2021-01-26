@@ -1,4 +1,4 @@
-import { initShaderProgram, useFramebufferTexture, attribFuns, uniformFuns, shaderProgramFun } from "../glSupply";
+import { initShaderProgram, attribFuns, uniformFuns, shaderProgramFun } from "../glSupply";
 import vs from "../../shader/line.vs";
 import fs from "../../shader/line.fs";
 const shader = (gl, vs, fs) => {
