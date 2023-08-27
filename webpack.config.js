@@ -35,6 +35,7 @@ module.exports = {
     "9.coordinate/main": "./src/9.coordinate/index.js",
     "10.curve/main": "./src/10.curve/index.js",
     "11.model/main": "./src/11.model/index.js",
+    "12.model_1/main": "./src/12.model_1/index.js",
   },
   output: {
     path: path.resolve(__dirname, "./dist/"),
@@ -237,6 +238,13 @@ module.exports = {
       filename: "11.model/index.html",
       hash: true,
       chunks: ["11.model/main"],
+    }),
+    new HtmlWebpackPlugin({
+      title: "12.model_1",
+      template: "./src/12.model_1/index.html",
+      filename: "12.model_1/index.html",
+      hash: true,
+      chunks: ["12.model_1/main"],
     }),
     new OptimizeCssAssetsWebpackPlugin(),
   ],
