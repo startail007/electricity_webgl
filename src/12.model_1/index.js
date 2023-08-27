@@ -89,11 +89,12 @@ const main = () => {
     thicknessScale: loadTexture(gl, thicknessScale),
   };
   //滑鼠位置
-  const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
+  // const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
+  const mPos = [0, 0];
 
   const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
   const framebufferTextures = {};
-
+  let count = 0;
   canvas.addEventListener("mousemove", (ev) => {
     VectorE.set(mPos, ev.pageX, ev.pageY);
   });
@@ -173,7 +174,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
     gl.depthFunc(gl.LEQUAL);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);*/
     {
-      const startPos = [100, 100];
+      const startPos = [400, 300];
       const endPos = [...mPos];
       const v = Vector.sub(endPos, startPos);
       const a = Vector.getAngle(v);
