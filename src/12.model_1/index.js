@@ -218,7 +218,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       const powerData = [
         [0, 0],
         [0.5, 1.5],
-        [0.8, 2],
+        [0.8, 4],
         [1.2, 2],
         [1.5, 1.5],
         [2, 0],
@@ -229,7 +229,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
         fixed: [1, 1],
         radius: [40, 40],
         thickness: [10, 10],
-        borderPower: [3, 3],
+        borderPower: [20, 2],
         length: Vector.length(v),
         offset: 0,
         power: 2,
