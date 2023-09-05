@@ -91,12 +91,22 @@ const main = () => {
   //滑鼠位置
   // const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
   const mPos = [0, 0];
+  const pList = [];
 
   const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
   const framebufferTextures = {};
-  let count = 0;
   canvas.addEventListener("mousemove", (ev) => {
     VectorE.set(mPos, ev.pageX, ev.pageY);
+  });
+  let count = 0;
+  const s = [0, 0];
+  const e = [0, 0];
+  canvas.addEventListener("mousedown", (ev) => {
+    VectorE.set(s, ev.pageX, ev.pageY);
+  });
+  canvas.addEventListener("mouseup", (ev) => {
+    VectorE.set(e, ev.pageX, ev.pageY);
+    pList.push({ s: [...s], e: [...e], t: 0 });
   });
 
   init(gl, programInfos, buffers, textures, {
@@ -116,6 +126,7 @@ const main = () => {
       mPos,
       framebufferTextures,
       size,
+      pList,
     });
   }
   requestAnimationFrame(render);
@@ -126,7 +137,7 @@ const init = (gl, programInfos, buffers, textures, datas) => {
 };
 
 const drawScene = (gl, programInfos, buffers, textures, datas) => {
-  const { now, delta, framebufferTextures, mPos, size } = datas;
+  const { now, delta, framebufferTextures, mPos, size, pList } = datas;
 
   const projectionMatrix = mat4.create();
   mat4.ortho(
@@ -167,97 +178,100 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       thicknessScaleSampler: textures.thicknessScale,
       sub: true,
     });
-    useTexture(gl, null, false);
-    /*gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clearDepth(1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);*/
-    {
-      const startPos = [400, 300];
-      const endPos = [...mPos];
-      const v = Vector.sub(endPos, startPos);
-      const a = Vector.getAngle(v);
-      mat4.identity(modelViewMatrix);
-      mat4.translate(modelViewMatrix, modelViewMatrix, [
-        ...Vector.mix(startPos, endPos, 0.5),
-        0.0,
-      ]);
-      /*const s = Vector.length(v);
-      mat4.scale(modelViewMatrix, modelViewMatrix, [s, 1, 1]);*/
-      mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
+    // useTexture(gl, null, false);
+    useTexture(gl, null, true);
 
-      const gradientColorRateData = [
-        [0, 1],
-        [0.5, 1],
-        [0.8, 0],
-        [1.2, 0],
-        [1.5, 1],
-        [2, 1],
-      ];
-      const thicknessScaleRateData = [
-        [0, 1],
-        [0.5, 1],
-        [0.8, 0],
-        [1.2, 0],
-        [1.5, 1],
-        [2, 1],
-      ];
-      // const flowRateData = [
-      //   [0, 0],
-      //   [0.5, 0.5],
-      //   [1.5, 0.5],
-      //   [2, 1],
-      // ];
-      const flowRateData = [
-        [0, 0],
-        [0.75, 0.5],
-        [1.25, 0.5],
-        [2, 1],
-      ];
-      const powerData = [
-        [0, 0],
-        [0.5, 1.5],
-        [0.8, 4],
-        [1.2, 2],
-        [1.5, 1.5],
-        [2, 0],
-      ];
-      shaderProgram.uniformSet({
-        modelViewMatrix: modelViewMatrix,
-        density: [0.2, 0.2],
-        fixed: [1, 1],
-        radius: [40, 40],
-        thickness: [10, 10],
-        borderPower: [20, 2],
-        length: Vector.length(v),
-        offset: 0,
-        power: 2,
-        power: lineInterpolation(
-          powerData,
-          (now * 0.001) % powerData[powerData.length - 1][0]
-        ),
-        gradientColorRate: 0,
-        gradientColorRate: lineInterpolation(
-          gradientColorRateData,
-          (now * 0.001) %
-            gradientColorRateData[gradientColorRateData.length - 1][0]
-        ),
-        thicknessScaleRate: 0,
-        thicknessScaleRate: lineInterpolation(
-          thicknessScaleRateData,
-          (now * 0.001) %
-            thicknessScaleRateData[thicknessScaleRateData.length - 1][0]
-        ),
-        flow: false,
-        flow: true,
-        flowSegment: 2,
-        flowRate: lineInterpolation(
-          flowRateData,
-          (now * 0.001) % flowRateData[flowRateData.length - 1][0]
-        ),
-      });
-      shaderProgram.draw(bufferData.indicesBufferData.length);
+    // gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    // gl.clearDepth(1.0);
+    // gl.enable(gl.DEPTH_TEST);
+    // gl.depthFunc(gl.LEQUAL);
+    // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    for (let i = 0; i < pList.length; i++) {
+      if (pList[i].t <= 2) {
+        pList[i].t += delta;
+        // const startPos = [400, 300];
+        const startPos = pList[i].s;
+        const endPos = pList[i].e;
+        const v = Vector.sub(endPos, startPos);
+        const a = Vector.getAngle(v);
+        mat4.identity(modelViewMatrix);
+        mat4.translate(modelViewMatrix, modelViewMatrix, [
+          ...Vector.mix(startPos, endPos, 0.5),
+          0.0,
+        ]);
+        /*const s = Vector.length(v);
+      mat4.scale(modelViewMatrix, modelViewMatrix, [s, 1, 1]);*/
+        mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
+
+        const gradientColorRateData = [
+          [0, 1],
+          [0.5, 1],
+          [0.8, 0],
+          [1.2, 0],
+          [1.5, 1],
+          [2, 1],
+        ];
+        const thicknessScaleRateData = [
+          [0, 1],
+          [0.5, 1],
+          [0.8, 0],
+          [1.2, 0],
+          [1.5, 1],
+          [2, 1],
+        ];
+        const flowRateData = [
+          [0, 0],
+          [0.75, 0.5],
+          [1.25, 0.5],
+          [2, 1],
+        ];
+        const powerData = [
+          [0, 0],
+          [0.5, 1.5],
+          [0.8, 6],
+          [1.2, 2],
+          [1.5, 1.5],
+          [2, 0],
+        ];
+        shaderProgram.uniformSet({
+          modelViewMatrix: modelViewMatrix,
+          density: [0.2, 0.2],
+          fixed: [1, 1],
+          radius: [40, 40],
+          thickness: [10, 10],
+          borderPower: [20, 2],
+          length: Vector.length(v),
+          offset: 0,
+          power: 2,
+          power: lineInterpolation(
+            powerData,
+            pList[i].t % powerData[powerData.length - 1][0]
+          ),
+          gradientColorRate: 0,
+          gradientColorRate: lineInterpolation(
+            gradientColorRateData,
+            pList[i].t %
+              gradientColorRateData[gradientColorRateData.length - 1][0]
+          ),
+          thicknessScaleRate: 0,
+          thicknessScaleRate: lineInterpolation(
+            thicknessScaleRateData,
+            pList[i].t %
+              thicknessScaleRateData[thicknessScaleRateData.length - 1][0]
+          ),
+          flow: false,
+          flow: true,
+          flowSegment: 2,
+          flowRate: lineInterpolation(
+            flowRateData,
+            pList[i].t % flowRateData[flowRateData.length - 1][0]
+          ),
+        });
+        shaderProgram.draw(bufferData.indicesBufferData.length);
+      } else {
+        pList.splice(i, 1);
+      }
     }
   }
 };

@@ -25,7 +25,13 @@ const loadShader = (gl, type, source) => {
   }
   return shader;
 };
-const arrayBufferData = (gl, data, count, classType = Float32Array, usage = gl.STATIC_DRAW) => {
+const arrayBufferData = (
+  gl,
+  data,
+  count,
+  classType = Float32Array,
+  usage = gl.STATIC_DRAW
+) => {
   let _data;
   const buffer = gl.createBuffer();
   let bufferLength = 0;
@@ -77,7 +83,12 @@ const arrayBufferData = (gl, data, count, classType = Float32Array, usage = gl.S
   obj.set(data);
   return obj;
 };
-const elementArrayBufferData = (gl, data, classType = Uint8Array, usage = gl.STATIC_DRAW) => {
+const elementArrayBufferData = (
+  gl,
+  data,
+  classType = Uint8Array,
+  usage = gl.STATIC_DRAW
+) => {
   let _data; // = new Uint8Array(data);
   const buffer = gl.createBuffer();
   //gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
@@ -204,7 +215,12 @@ const setFramebuffer = (gl, fbo, width, height) => {
 const useFramebufferTexture = (gl, framebufferTexture, resize = true) => {
   if (framebufferTexture) {
     if (resize) {
-      setFramebuffer(gl, framebufferTexture.framebuffer, framebufferTexture.width, framebufferTexture.height);
+      setFramebuffer(
+        gl,
+        framebufferTexture.framebuffer,
+        framebufferTexture.width,
+        framebufferTexture.height
+      );
     } else {
       setFramebuffer(gl, framebufferTexture.framebuffer);
     }
@@ -223,11 +239,27 @@ const createFramebufferTexture = (gl, width, height) => {
   };
   const texture = createAndSetupTexture(gl);
   obj.texture = texture;
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, obj.width, obj.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    obj.width,
+    obj.height,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    null
+  );
   const fbo = gl.createFramebuffer();
   obj.framebuffer = fbo;
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    gl.COLOR_ATTACHMENT0,
+    gl.TEXTURE_2D,
+    texture,
+    0
+  );
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   /*obj.use = () => {
