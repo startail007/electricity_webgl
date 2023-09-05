@@ -96,16 +96,16 @@ const main = () => {
   const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
   const framebufferTextures = {};
   canvas.addEventListener("mousemove", (ev) => {
-    VectorE.set(mPos, ev.pageX, ev.pageY);
+    VectorE.set(mPos, ev.offsetX, ev.offsetY);
   });
   let count = 0;
   const s = [0, 0];
   const e = [0, 0];
   canvas.addEventListener("mousedown", (ev) => {
-    VectorE.set(s, ev.pageX, ev.pageY);
+    VectorE.set(s, ev.offsetX, ev.offsetY);
   });
   canvas.addEventListener("mouseup", (ev) => {
-    VectorE.set(e, ev.pageX, ev.pageY);
+    VectorE.set(e, ev.offsetX, ev.offsetY);
     pList.push({ s: [...s], e: [...e], t: 0 });
   });
 
