@@ -74,6 +74,14 @@ class Vector {
   static getLine(vector0, vector1) {
     return { pos: vector0, dir: Vector.sub(vector1, vector0) };
   }
+  static toLineDistance(point, point0, point1, pn = false) {
+    const v = Vector.sub(point1, point0);
+    const a = v[1];
+    const b = -v[0];
+    const c = -point0[0] * v[1] + v[0] * point0[1];
+    const ans = (point[0] * a + point[1] * b + c) / Vector.length(v);
+    return pn ? ans : Math.abs(ans);
+  }
   /*static refraction(vector, f, n) {
     //var fn = f.normalize();
     let fn = Vector.normalize(f);
