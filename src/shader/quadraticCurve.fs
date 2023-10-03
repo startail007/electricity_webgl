@@ -39,15 +39,6 @@ vec2 quadraticCurve(vec2 p,vec2 a,vec2 b,vec2 c,float w){
   vec2 p2=getQuadraticCurveTo(a,b,c,1.);
   vec2 p1=getQuadraticCurveTo(a,b,c,rate);
   for(int i=0;i<N;i++){
-    /*float line0 = distLine(p,p1,p0,1.);
-    float line1 = distLine(p,p1,p2,1.);
-    if(line0<line1){
-      rate-=s*.5;
-      p2 = p1;
-    }else if(line0>line1){
-      rate+=s*.5;
-      p0 = p1;
-    }else{*/
       vec2 t=getQuadraticCurveToTangent(a,b,c,rate);
       t=vec2(-t.y,t.x);
       if(cross(p-p1,t)<0.){
@@ -57,11 +48,9 @@ vec2 quadraticCurve(vec2 p,vec2 a,vec2 b,vec2 c,float w){
         rate+=s*.5;
         p0=p1;
       }
-    //}
     s*=.5;
     p1=getQuadraticCurveTo(a,b,c,rate);
   }
-  //return vec2(length(p-p1)/w,rate);
   return vec2(distLine(p,p0,p2,w),rate);
 }
 void main()
@@ -80,6 +69,13 @@ void main()
   vec2 t=getQuadraticCurveToTangent(uStartPos,uControlPos,uEndPos,fract(uTime*.1));
   t=vec2(-t.y,t.x);
   color+=smoothstep(1.,0.,distLine(uv,p,p+10.*normalize(t),1.));
+
+
+  // color += vec4(vec3(smoothstep(1.,0.,distLine(uv,uStartPos,uControlPos,50.0))),1.0);
+  // float a0 = smoothstep(1.,0.,length(uv-uStartPos)*0.005);
+  // float a1 = smoothstep(1.,0.,length(uv-uControlPos)*0.005);
+  // float a2 = smoothstep(1.,0.,length(uv-uEndPos)*0.005);
+  // color+=vec4(vec3(max(max(a0,a1),a2)),1.0);
   
   gl_FragColor=color;
 }

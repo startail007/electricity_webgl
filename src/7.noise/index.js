@@ -98,7 +98,6 @@ function main() {
     noise: createFramebufferTexture(gl),
     noisePerlin3D: createFramebufferTexture(gl),
   };
-
   const noiseTexture = [
     [
       { framebufferTexture: framebufferTextures.noisePerlin, shaderProgram: programInfos.noisePerlinShader, type: 1 },

@@ -11,7 +11,7 @@ import {
   useTexture,
   loadTexture,
 } from "../js/glSupply";
-import { Vector, VectorE, getQuadraticCurveTo, getQuadraticCurveToTangent } from "../js/vector";
+import { Vector, VectorE, getQuadraticCurveTo, getQuadraticCurveToTangent, Line } from "../js/vector";
 import EasingFunctions from "../js/ease";
 import electricityModelShader from "./shader/electricityModelShader";
 import { lagrangeInterpolation, lineInterpolation } from "../js/base";
@@ -313,16 +313,17 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
           [1.5, 1.5],
           [2, 0],
         ];
-        let d = -Vector.toLineDistance(pList[i].p1, pList[i].p0, pList[i].p2, true) * 0.5;
+        let d = -Line.toLineDistance(pList[i].p1, pList[i].p0, pList[i].p2, true) * 0.5;
         if (Math.abs(d) > 50) {
           d = 50 * (d / Math.abs(d));
         }
+        const len = Math.min(Vector.distance(pList[i].p1, pList[i].p2) / 2, 60);
         shaderProgram.uniformSet({
           time: now * 0.001 + pList[i].random,
           modelViewMatrix: modelViewMatrix,
           density: [0.2, 0.2],
           fixed: [1, 1],
-          radius: [40, 40],
+          radius: [len, len],
           thickness: [10, 10],
           borderPower: [10, 2],
           length: Vector.length(v),

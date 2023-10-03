@@ -1,5 +1,5 @@
 import { Float } from "./float";
-class Vector {
+export class Vector {
   static normalize(vector) {
     const len = Vector.length(vector);
     if (len) {
@@ -71,17 +71,7 @@ class Vector {
   static abs(vector) {
     return [Math.abs(vector[0]), Math.abs(vector[1])];
   }
-  static getLine(vector0, vector1) {
-    return { pos: vector0, dir: Vector.sub(vector1, vector0) };
-  }
-  static toLineDistance(point, point0, point1, pn = false) {
-    const v = Vector.sub(point1, point0);
-    const a = v[1];
-    const b = -v[0];
-    const c = -point0[0] * v[1] + v[0] * point0[1];
-    const ans = (point[0] * a + point[1] * b + c) / Vector.length(v);
-    return pn ? ans : Math.abs(ans);
-  }
+
   /*static refraction(vector, f, n) {
     //var fn = f.normalize();
     let fn = Vector.normalize(f);
@@ -115,7 +105,7 @@ class Vector {
     return v1;
   }*/
 }
-class VectorE {
+export class VectorE {
   static set(vector, x, y) {
     vector[0] = x;
     vector[1] = y;
@@ -150,14 +140,123 @@ class VectorE {
     return vector;
   }
 }
-const getQuadraticCurveTo = (vector0, vector1, vector2, t) => {
-  const x = vector0[0] * (1 - t) * (1 - t) + 2 * vector1[0] * (1 - t) * t + vector2[0] * t * t;
-  const y = vector0[1] * (1 - t) * (1 - t) + 2 * vector1[1] * (1 - t) * t + vector2[1] * t * t;
+export class Line {
+  static doLineSegmentsIntersect(p0, p1, p2, p3) {
+    function orientation(p, q, r) {
+      var val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1]);
+      if (val === 0) return 0; // 共線
+      return val > 0 ? 1 : 2; // 順時針或逆時針
+    }
+
+    function onSegment(p, q, r) {
+      return (
+        q[0] <= Math.max(p[0], r[0]) &&
+        q[0] >= Math.min(p[0], r[0]) &&
+        q[1] <= Math.max(p[1], r[1]) &&
+        q[1] >= Math.min(p[1], r[1])
+      );
+    }
+
+    var o1 = orientation(p0, p1, p2);
+    var o2 = orientation(p0, p1, p3);
+    var o3 = orientation(p2, p3, p0);
+    var o4 = orientation(p2, p3, p1);
+    if (o1 !== o2 && o3 !== o4) {
+      return true;
+    }
+    if (o1 === 0 && onSegment(p0, p2, p1)) return true;
+    if (o2 === 0 && onSegment(p0, p3, p1)) return true;
+    if (o3 === 0 && onSegment(p2, p0, p3)) return true;
+    if (o4 === 0 && onSegment(p2, p1, p3)) return true;
+
+    return false;
+  }
+  static getLine(point0, point1) {
+    return { pos: point0, dir: Vector.sub(point1, point0) };
+  }
+  static toLineDistance(point, point0, point1, pn = false) {
+    const v = Vector.sub(point1, point0);
+    const a = v[1];
+    const b = -v[0];
+    const c = -point0[0] * v[1] + v[0] * point0[1];
+    const ans = (point[0] * a + point[1] * b + c) / Vector.length(v);
+    return pn ? ans : Math.abs(ans);
+  }
+}
+export const getQuadraticCurveTo = (vector0, vector1, vector2, t) => {
+  const t2 = t * t;
+  const x = vector0[0] * (t2 - 2 * t + 1) + 2 * vector1[0] * (-t + 1) * t + vector2[0] * t2;
+  const y = vector0[1] * (t2 - 2 * t + 1) + 2 * vector1[1] * (-t + 1) * t + vector2[1] * t2;
   return [x, y];
 };
-const getQuadraticCurveToTangent = (vector0, vector1, vector2, t) => {
+export const getQuadraticCurveToTangent = (vector0, vector1, vector2, t) => {
   const x = 2 * t * (vector0[0] - vector1[0] * 2 + vector2[0]) + 2 * (-vector0[0] + vector1[0]);
   const y = 2 * t * (vector0[1] - vector1[1] * 2 + vector2[1]) + 2 * (-vector0[1] + vector1[1]);
   return [x, y];
 };
-export { getQuadraticCurveTo, getQuadraticCurveToTangent, Vector, VectorE };
+export const getCubicCurveTo = (vector0, vector1, vector2, vector3, t) => {
+  const t2 = t * t;
+  const t3 = t * t * t;
+  const x =
+    vector0[0] * (-t3 + 3 * t2 - 3 * t + 1) +
+    vector1[0] * (3 * t3 - 6 * t2 + 3 * t) +
+    vector2[0] * (-3 * t3 + 3 * t2) +
+    vector3[0] * t3;
+  const y =
+    vector0[1] * (-t3 + 3 * t2 - 3 * t + 1) +
+    vector1[1] * (3 * t3 - 6 * t2 + 3 * t) +
+    vector2[1] * (-3 * t3 + 3 * t2) +
+    vector3[1] * t3;
+  return [x, y];
+};
+
+export const getCubicCurveToTangent = (vector0, vector1, vector2, vector3, t) => {
+  const t2 = t * t;
+  const x =
+    -3 * vector0[0] +
+    3 * vector1[0] +
+    2 * t * (3 * vector0[0] - 6 * vector1[0] + 3 * vector2[0]) +
+    3 * t2 * (-vector0[0] + 3 * vector1[0] - 3 * vector2[0] + vector3[0]);
+  const y =
+    -3 * vector0[1] +
+    3 * vector1[1] +
+    2 * t * (3 * vector0[1] - 6 * vector1[1] + 3 * vector2[1]) +
+    3 * t2 * (-vector0[1] + 3 * vector1[1] - 3 * vector2[1] + vector3[1]);
+  return [x, y];
+};
+
+export const getQuadraticCurveInfo = (p0, p1, p2, n) => {
+  const points = [];
+  const section = [];
+  let _p = null;
+  for (let j = 0; j < n; j++) {
+    const rate = j / (n - 1);
+    const p = getQuadraticCurveTo(p0, p1, p2, rate);
+    const t = Vector.normalize(getQuadraticCurveToTangent(p0, p1, p2, rate));
+    points.push({ p, t, n: [-t[1], t[0]] });
+    if (_p) {
+      section.push(Vector.distance(p, _p));
+    }
+    _p = p;
+  }
+  const length = section.reduce((pv, cv) => pv + cv);
+  return { points, section, length };
+};
+
+export const getCubicCurveInfo = (p0, p1, p2, p3, n) => {
+  const points = [];
+  const section = [];
+  let _p = null;
+  for (let j = 0; j < n; j++) {
+    const rate = j / (n - 1);
+    const p = getCubicCurveTo(p0, p1, p2, p3, rate);
+    const t = Vector.normalize(getCubicCurveToTangent(p0, p1, p2, p3, rate));
+    points.push({ p, t, n: [-t[1], t[0]] });
+    if (_p) {
+      section.push(Vector.distance(p, _p));
+    }
+    _p = p;
+  }
+  const length = section.reduce((pv, cv) => pv + cv);
+  return { points, section, length };
+};
