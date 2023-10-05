@@ -1,9 +1,4 @@
-import {
-  initShaderProgram,
-  attribFuns,
-  uniformFuns,
-  shaderProgramFun,
-} from "./glSupply";
+import { initShaderProgram, attribFuns, uniformFuns, shaderProgramFun } from "../../js/glSupply";
 import vs from "./electricityModel.vs";
 import fs from "./electricityModel.fs";
 const shader = (gl, vs, fs) => {
@@ -11,48 +6,15 @@ const shader = (gl, vs, fs) => {
   const programInfo = {
     program: shaderProgram,
     attribLocations: {
-      vertexPosition: attribFuns.attribFloat(
-        gl,
-        shaderProgram,
-        "aVertexPosition",
-        2
-      ),
-      textureCoord: attribFuns.attribFloat(
-        gl,
-        shaderProgram,
-        "aTextureCoord",
-        2
-      ),
+      vertexPosition: attribFuns.attribFloat(gl, shaderProgram, "aVertexPosition", 2),
+      textureCoord: attribFuns.attribFloat(gl, shaderProgram, "aTextureCoord", 2),
     },
     uniformLocations: {
-      projectionMatrix: uniformFuns.uniformMatrix4fv(
-        gl,
-        shaderProgram,
-        "uProjectionMatrix"
-      ),
-      modelViewMatrix: uniformFuns.uniformMatrix4fv(
-        gl,
-        shaderProgram,
-        "uModelViewMatrix"
-      ),
-      noiseSampler: uniformFuns.uniformTexture(
-        gl,
-        shaderProgram,
-        "uNoiseSampler",
-        0
-      ), //噪聲貼圖
-      gradientColorSampler: uniformFuns.uniformTexture(
-        gl,
-        shaderProgram,
-        "uGradientColorSampler",
-        1
-      ), //漸層色貼圖
-      thicknessScaleSampler: uniformFuns.uniformTexture(
-        gl,
-        shaderProgram,
-        "uThicknessScaleSampler",
-        2
-      ), //線段粗細貼圖
+      projectionMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uProjectionMatrix"),
+      modelViewMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uModelViewMatrix"),
+      noiseSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uNoiseSampler", 0), //噪聲貼圖
+      gradientColorSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uGradientColorSampler", 1), //漸層色貼圖
+      thicknessScaleSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uThicknessScaleSampler", 2), //線段粗細貼圖
       mouse: uniformFuns.uniform2fv(gl, shaderProgram, "uMouse"),
       length: uniformFuns.uniform1f(gl, shaderProgram, "uLength"), //線段長度
       time: uniformFuns.uniform1f(gl, shaderProgram, "uTime"), //時間
@@ -63,16 +25,8 @@ const shader = (gl, vs, fs) => {
       offset: uniformFuns.uniform1f(gl, shaderProgram, "uOffset"), //偏移位置(貝茲曲線)
       power: uniformFuns.uniform1f(gl, shaderProgram, "uPower"), //中間電流能量
       borderPower: uniformFuns.uniform2fv(gl, shaderProgram, "uBorderPower"), //頭尾球狀能量
-      gradientColorRate: uniformFuns.uniform1f(
-        gl,
-        shaderProgram,
-        "uGradientColorRate"
-      ), //漸層色位置
-      thicknessScaleRate: uniformFuns.uniform1f(
-        gl,
-        shaderProgram,
-        "uThicknessScaleRate"
-      ), //線段粗細位置
+      gradientColorRate: uniformFuns.uniform1f(gl, shaderProgram, "uGradientColorRate"), //漸層色位置
+      thicknessScaleRate: uniformFuns.uniform1f(gl, shaderProgram, "uThicknessScaleRate"), //線段粗細位置
 
       sub: uniformFuns.uniform1i(gl, shaderProgram, "uSub"), //子電流
 

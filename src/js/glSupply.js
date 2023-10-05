@@ -1,4 +1,4 @@
-const initShaderProgram = (gl, vsSource, fsSource) => {
+export const initShaderProgram = (gl, vsSource, fsSource) => {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
   const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -14,7 +14,7 @@ const initShaderProgram = (gl, vsSource, fsSource) => {
   return shaderProgram;
 };
 
-const loadShader = (gl, type, source) => {
+export const loadShader = (gl, type, source) => {
   const shader = gl.createShader(type);
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
@@ -25,13 +25,7 @@ const loadShader = (gl, type, source) => {
   }
   return shader;
 };
-const arrayBufferData = (
-  gl,
-  data,
-  count,
-  classType = Float32Array,
-  usage = gl.STATIC_DRAW
-) => {
+export const arrayBufferData = (gl, data, count, classType = Float32Array, usage = gl.STATIC_DRAW) => {
   let _data;
   const buffer = gl.createBuffer();
   let bufferLength = 0;
@@ -83,12 +77,7 @@ const arrayBufferData = (
   obj.set(data);
   return obj;
 };
-const elementArrayBufferData = (
-  gl,
-  data,
-  classType = Uint8Array,
-  usage = gl.STATIC_DRAW
-) => {
+export const elementArrayBufferData = (gl, data, classType = Uint8Array, usage = gl.STATIC_DRAW) => {
   let _data; // = new Uint8Array(data);
   const buffer = gl.createBuffer();
   //gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
@@ -180,7 +169,7 @@ const elementArrayBufferData = (
   return obj;
 };*/
 
-const createAndSetupTexture = (gl) => {
+export const createAndSetupTexture = (gl) => {
   var texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
@@ -192,7 +181,7 @@ const createAndSetupTexture = (gl) => {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   return texture;
 };
-const loadTexture = (gl, url) => {
+export const loadTexture = (gl, url) => {
   const texture = createAndSetupTexture(gl);
   const image = new Image();
   image.onload = function () {
@@ -205,22 +194,17 @@ const loadTexture = (gl, url) => {
   image.src = url;
   return texture;
 };
-const setFramebuffer = (gl, fbo, width, height) => {
+export const setFramebuffer = (gl, fbo, width, height) => {
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
   if (width !== undefined && height !== undefined) {
     gl.viewport(0, 0, width, height);
   }
 };
 
-const useFramebufferTexture = (gl, framebufferTexture, resize = true) => {
+export const useFramebufferTexture = (gl, framebufferTexture, resize = true) => {
   if (framebufferTexture) {
     if (resize) {
-      setFramebuffer(
-        gl,
-        framebufferTexture.framebuffer,
-        framebufferTexture.width,
-        framebufferTexture.height
-      );
+      setFramebuffer(gl, framebufferTexture.framebuffer, framebufferTexture.width, framebufferTexture.height);
     } else {
       setFramebuffer(gl, framebufferTexture.framebuffer);
     }
@@ -232,34 +216,18 @@ const useFramebufferTexture = (gl, framebufferTexture, resize = true) => {
     }
   }
 };
-const createFramebufferTexture = (gl, width, height) => {
+export const createFramebufferTexture = (gl, width, height) => {
   const obj = {
     width: width || gl.canvas.clientWidth,
     height: height || gl.canvas.clientHeight,
   };
   const texture = createAndSetupTexture(gl);
   obj.texture = texture;
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RGBA,
-    obj.width,
-    obj.height,
-    0,
-    gl.RGBA,
-    gl.UNSIGNED_BYTE,
-    null
-  );
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, obj.width, obj.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
   const fbo = gl.createFramebuffer();
   obj.framebuffer = fbo;
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-  gl.framebufferTexture2D(
-    gl.FRAMEBUFFER,
-    gl.COLOR_ATTACHMENT0,
-    gl.TEXTURE_2D,
-    texture,
-    0
-  );
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   /*obj.use = () => {
@@ -267,7 +235,7 @@ const createFramebufferTexture = (gl, width, height) => {
   };*/
   return obj;
 };
-const createFramebufferTextures = (gl, n, width, height) => {
+export const createFramebufferTextures = (gl, n, width, height) => {
   const framebufferTextures = [];
   for (let i = 0; i < n; i++) {
     framebufferTextures.push(createFramebufferTexture(gl, width, height));
@@ -276,7 +244,7 @@ const createFramebufferTextures = (gl, n, width, height) => {
   return framebufferTextures;
 };
 
-const attribFuns = {
+export const attribFuns = {
   attribFloat(gl, shaderProgram, name, count) {
     const i = gl.getAttribLocation(shaderProgram, name);
     gl.enableVertexAttribArray(i);
@@ -286,7 +254,7 @@ const attribFuns = {
     };
   },
 };
-const uniformFuns = {
+export const uniformFuns = {
   uniform1f(gl, shaderProgram, name) {
     const i = gl.getUniformLocation(shaderProgram, name);
     return (val) => {
@@ -327,7 +295,7 @@ const uniformFuns = {
     };
   },
 };
-const shaderProgramFun = (gl, shader, vs, fs, drawFun) => {
+export const shaderProgramFun = (gl, shader, vs, fs, drawFun) => {
   const programInfo = shader(gl, vs, fs);
   return {
     programInfo: programInfo,
@@ -353,7 +321,7 @@ const shaderProgramFun = (gl, shader, vs, fs, drawFun) => {
     },
   };
 };
-const getViewData = (corner) => {
+export const getViewData = (corner) => {
   return [
     [corner[0], corner[1]],
     [corner[2], corner[1]],
@@ -361,32 +329,41 @@ const getViewData = (corner) => {
     [corner[0], corner[3]],
   ].flat();
 };
-const clear = (gl) => {
+
+export const getViewData0 = (corner) => {
+  return [
+    [corner[0], corner[1]],
+    [corner[0], corner[3]],
+    [corner[2], corner[1]],
+    [corner[2], corner[3]],
+  ].flat();
+};
+export const clear = (gl) => {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 };
-const useTexture = (gl, texture, clearBool = true, resize = true) => {
+export const useTexture = (gl, texture, clearBool = true, resize = true) => {
   useFramebufferTexture(gl, texture, resize);
   if (clearBool) {
     clear(gl);
   }
 };
-export {
-  shaderProgramFun,
-  initShaderProgram,
-  loadShader,
-  setFramebuffer,
-  useFramebufferTexture,
-  createFramebufferTexture,
-  createFramebufferTextures,
-  arrayBufferData,
-  //arrayBufferData0,
-  elementArrayBufferData,
-  createAndSetupTexture,
-  loadTexture,
-  attribFuns,
-  uniformFuns,
-  getViewData,
-  clear,
-  useTexture,
-};
+// export {
+//   shaderProgramFun,
+//   initShaderProgram,
+//   loadShader,
+//   setFramebuffer,
+//   useFramebufferTexture,
+//   createFramebufferTexture,
+//   createFramebufferTextures,
+//   arrayBufferData,
+//   //arrayBufferData0,
+//   elementArrayBufferData,
+//   createAndSetupTexture,
+//   loadTexture,
+//   attribFuns,
+//   uniformFuns,
+//   getViewData,
+//   clear,
+//   useTexture,
+// };

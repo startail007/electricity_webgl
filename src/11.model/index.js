@@ -406,47 +406,47 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
     }
   }
 
-  {
-    const bufferData = buffers.model;
-    const shaderProgram = programInfos.electricityBranchModelShader;
-    shaderProgram.use();
-    shaderProgram.attribSet({
-      vertexPosition: bufferData.positionBufferData.buffer,
-      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
-    });
-    shaderProgram.elementSet(bufferData.indicesBufferData.buffer);
+  // {
+  //   const bufferData = buffers.model;
+  //   const shaderProgram = programInfos.electricityBranchModelShader;
+  //   shaderProgram.use();
+  //   shaderProgram.attribSet({
+  //     vertexPosition: bufferData.positionBufferData.buffer,
+  //     textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+  //   });
+  //   shaderProgram.elementSet(bufferData.indicesBufferData.buffer);
 
-    shaderProgram.uniformSet({
-      projectionMatrix: projectionMatrix,
-      mouse: Vector.add(Vector.mul(mPos, [1, -1]), [0, size[1]]),
-      time: now * 0.001,
-      wireframe: guiData.wireframe,
-      noiseSampler: textures.noise,
-      gradientColorSampler: textures.gradientColor,
-      sub: true,
-    });
-    useTexture(gl, null, false);
-    {
-      const startPos = [500, 100];
-      const endPos = [700, 100];
-      const v = Vector.sub(endPos, startPos);
-      const a = Vector.getAngle(v);
-      mat4.identity(modelViewMatrix);
-      mat4.translate(modelViewMatrix, modelViewMatrix, [...Vector.mix(startPos, endPos, 0.5), 0.0]);
-      mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
-      shaderProgram.uniformSet({
-        modelViewMatrix: modelViewMatrix,
-        density: [0.6, 0.6],
-        fixed: [1, 1],
-        radius: [40, 40],
-        thickness: [10, 10],
-        length: Vector.length(v),
-        offset: 0,
-        power: 1,
-      });
-      shaderProgram.draw(bufferData.indicesBufferData.length);
-    }
-  }
+  //   shaderProgram.uniformSet({
+  //     projectionMatrix: projectionMatrix,
+  //     mouse: Vector.add(Vector.mul(mPos, [1, -1]), [0, size[1]]),
+  //     time: now * 0.001,
+  //     wireframe: guiData.wireframe,
+  //     noiseSampler: textures.noise,
+  //     gradientColorSampler: textures.gradientColor,
+  //     sub: true,
+  //   });
+  //   useTexture(gl, null, false);
+  //   {
+  //     const startPos = [500, 100];
+  //     const endPos = [700, 100];
+  //     const v = Vector.sub(endPos, startPos);
+  //     const a = Vector.getAngle(v);
+  //     mat4.identity(modelViewMatrix);
+  //     mat4.translate(modelViewMatrix, modelViewMatrix, [...Vector.mix(startPos, endPos, 0.5), 0.0]);
+  //     mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
+  //     shaderProgram.uniformSet({
+  //       modelViewMatrix: modelViewMatrix,
+  //       density: [0.6, 0.6],
+  //       fixed: [1, 1],
+  //       radius: [40, 40],
+  //       thickness: [10, 10],
+  //       length: Vector.length(v),
+  //       offset: 0,
+  //       power: 1,
+  //     });
+  //     shaderProgram.draw(bufferData.indicesBufferData.length);
+  //   }
+  // }
 
   {
     particles.forEach((el, i, ary) => {

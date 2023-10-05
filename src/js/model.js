@@ -93,3 +93,34 @@ export const infoModelBuffers = (gl, info, expand) => {
     indicesBufferData: indicesBufferData,
   };
 };
+
+export const faceBuffers = (gl) => {
+  const positions = [
+    [0.0, 0.0],
+    [0.0, 1.0],
+    [1.0, 0.0],
+    [1.0, 1.0],
+  ].flat();
+  const positionBufferData = arrayBufferData(gl, positions, 2);
+
+  const textureCoordinates = [
+    [0.0, 0.0],
+    [0.0, 1.0],
+    [1.0, 0.0],
+    [1.0, 1.0],
+  ].flat();
+  const textureCoordinatesBufferData = arrayBufferData(gl, textureCoordinates, 2);
+
+  //ELEMENT_ARRAY_BUFFER
+  const indices = [
+    [1, 2, 0],
+    [1, 3, 2],
+  ].flat();
+  const indicesBufferData = elementArrayBufferData(gl, indices);
+
+  return {
+    positionBufferData: positionBufferData,
+    textureCoordinatesBufferData: textureCoordinatesBufferData,
+    indicesBufferData: indicesBufferData,
+  };
+};

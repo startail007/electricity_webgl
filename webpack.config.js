@@ -37,6 +37,7 @@ module.exports = {
     "11.model/main": "./src/11.model/index.js",
     "12.model_1/main": "./src/12.model_1/index.js",
     "13.model_2/main": "./src/13.model_2/index.js",
+    "14.model_3/main": "./src/14.model_3/index.js",
   },
   output: {
     path: path.resolve(__dirname, "./dist/"),
@@ -253,6 +254,13 @@ module.exports = {
       filename: "13.model_2/index.html",
       hash: true,
       chunks: ["13.model_2/main"],
+    }),
+    new HtmlWebpackPlugin({
+      title: "14.model_3",
+      template: "./src/14.model_3/index.html",
+      filename: "14.model_3/index.html",
+      hash: true,
+      chunks: ["14.model_3/main"],
     }),
     new OptimizeCssAssetsWebpackPlugin(),
   ],

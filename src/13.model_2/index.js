@@ -9,12 +9,14 @@ import {
   createFramebufferTexture,
   useTexture,
   loadTexture,
+  getViewData0,
 } from "../js/glSupply";
 import { Vector, VectorE, getQuadraticCurveInfo, getCubicCurveInfo } from "../js/vector";
 import EasingFunctions from "../js/ease";
 import electricityModelShader from "./shader/electricityModelShader";
+import viewShader from "../js/shader/viewShader";
 import { lagrangeInterpolation, lineInterpolation } from "../js/base";
-import { infoModelBuffers } from "../js/model";
+import { modelBuffers } from "../js/model";
 
 const main = () => {
   const canvas = document.querySelector("#glcanvas");
@@ -34,14 +36,13 @@ const main = () => {
     alert("無法初始化WebGL。您的瀏覽器或機器可能不支持它。");
     return;
   }
+
   //著色器資料
   const programInfos = {
     electricityModelShader: electricityModelShader(gl),
   };
   //緩衝資料
-  const buffers = {
-    //model: modelBuffers(gl),
-  };
+  const buffers = {};
   //貼圖
   const textures = {
     noise: loadTexture(gl, noise),
@@ -54,9 +55,13 @@ const main = () => {
   const pList = [];
 
   const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
-  const framebufferTextures = {};
+  const framebufferTextures = {
+    text: createFramebufferTexture(gl),
+    blurs: [createFramebufferTexture(gl), createFramebufferTexture(gl)],
+  };
   canvas.addEventListener("mousemove", (ev) => {
     VectorE.set(mPos, ev.offsetX, ev.offsetY);
+
     const len = Vector.distance(mPos, [400, 300]);
     if (len <= 300) {
       const list = pList.filter((el) => el.group === "my" && !el.remove);
@@ -68,6 +73,7 @@ const main = () => {
           pointList: [[400, 300], [...mPos], [...mPos]],
         });
         electricity.onUpdate((el, delta) => {
+          console.log();
           if (el.flow) {
             if (el.remove) {
               if (el.tRate < 1) {
@@ -144,15 +150,16 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
   gl.enable(gl.CULL_FACE);
   gl.enable(gl.BLEND);
   //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-  gl.blendFunc(gl.ONE, gl.ONE);
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clearDepth(1.0);
-  gl.enable(gl.DEPTH_TEST);
+  //gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.clear(gl.COLOR_BUFFER_BIT);
 
   {
+    gl.blendFunc(gl.ONE, gl.ONE);
     const gradientColorRateData = [
       [0, 1],
       [0.1, 1],
