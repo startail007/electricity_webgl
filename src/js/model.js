@@ -48,18 +48,6 @@ export const infoModelBuffers = (gl, info, expand) => {
   p = Vector.add(point.p, Vector.scale(point.t, -halfExpand));
   positions.push(...addP(p, point.n, halfExpand));
 
-  // points.forEach((point) => {
-  //   const addPoints = addP(point.p, point.n, halfExpand);
-  //   lines.push({ center: point.p, addPoints: addPoints });
-  // });
-  // const temp = [];
-  // for (let i = 0; i < lines.length - 1; i++) {
-  //   const addPoints0 = lines[i].addPoints;
-  //   const addPoints1 = lines[i + 1].addPoints;
-  //   if (Line.doLineSegmentsIntersect(...addPoints0, ...addPoints1)) {
-  //     console.log(i);
-  //   }
-  // }
   points.forEach((point) => {
     const addPoints = addP(point.p, point.n, halfExpand);
     positions.push(...addPoints);

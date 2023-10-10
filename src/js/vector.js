@@ -3,7 +3,7 @@ export class Vector {
   static normalize(vector) {
     const len = Vector.length(vector);
     if (len) {
-      return Vector.scale(vector, 1 / Vector.length(vector));
+      return Vector.scale(vector, 1 / len);
     }
     return vector;
   }
