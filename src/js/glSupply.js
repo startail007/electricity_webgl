@@ -261,6 +261,12 @@ export const uniformFuns = {
       gl.uniform1f(i, val);
     };
   },
+  uniform1fv(gl, shaderProgram, name) {
+    const i = gl.getUniformLocation(shaderProgram, name);
+    return (val) => {
+      gl.uniform1fv(i, val);
+    };
+  },
   uniform2fv(gl, shaderProgram, name) {
     const i = gl.getUniformLocation(shaderProgram, name);
     return (val) => {

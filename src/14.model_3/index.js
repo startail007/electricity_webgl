@@ -4,9 +4,10 @@ import gradientColor from "./gradientColor.jpg";
 import thicknessScale from "./thicknessScale.jpg";
 import Electricity from "./electricity";
 import Text from "./text";
-import { loadTexture } from "../js/glSupply";
+import { loadTexture, createFramebufferTexture, useTexture } from "../js/glSupply";
 import { Vector, VectorE, getQuadraticCurveInfo, getCubicCurveInfo } from "../js/vector";
 import { getTextData, getNearestDistance } from "./funs";
+import Blur from "./blur";
 
 const main = () => {
   const canvas = document.querySelector("#glcanvas");
@@ -33,6 +34,8 @@ const main = () => {
   const text01 = new Text(gl);
   text01.setText(gl, "POWER", "bold 120px Courier New");
   text01.pos = [gl.canvas.width * 0.5 - text01.width * 0.5, gl.canvas.height * 0.5 - text01.height * 0.5];
+
+  const blur01 = new Blur(gl);
   //著色器資料
   const programInfos = {};
   //緩衝資料
@@ -52,6 +55,8 @@ const main = () => {
 
   const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
   const framebufferTextures = {
+    temp0: createFramebufferTexture(gl),
+    temp1: createFramebufferTexture(gl),
     // text: createFramebufferTexture(gl),
     // blurs: [createFramebufferTexture(gl), createFramebufferTexture(gl)],
   };
@@ -147,6 +152,7 @@ const main = () => {
       size,
       pList,
       text01,
+      blur01,
     });
   }
   requestAnimationFrame(render);
@@ -157,7 +163,7 @@ const init = (gl, programInfos, buffers, textures, datas) => {
 };
 
 const drawScene = (gl, programInfos, buffers, textures, datas) => {
-  const { now, delta, framebufferTextures, mPos, size, pList, text01 } = datas;
+  const { now, delta, framebufferTextures, mPos, size, pList, text01, blur01 } = datas;
 
   const projectionMatrix = mat4.create();
   mat4.ortho(projectionMatrix, 0, gl.canvas.clientWidth, gl.canvas.clientHeight, 0, 0.1, 100);
@@ -173,6 +179,22 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
   gl.depthFunc(gl.LEQUAL);
   //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
+
+  {
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    // text01.update(delta);
+    text01.draw(gl, projectionMatrix, { framebufferTexture: framebufferTextures.temp0 });
+  }
+  {
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    blur01.draw(gl, projectionMatrix, {
+      texture: framebufferTextures.temp0.texture,
+      pos: [0, 0],
+      width: gl.canvas.width,
+      height: gl.canvas.height,
+    });
+  }
   {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
