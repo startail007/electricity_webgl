@@ -1,18 +1,20 @@
 import { faceBuffers } from "../js/model";
-import blurShader from "./shader/blurShader";
+import compositeShader from "./shader/compositeShader";
 import { Vector } from "../js/vector";
 import { loadTexture, getViewData0, useTexture, createFramebufferTexture } from "../js/glSupply";
-export default class Blur {
+export default class Composite {
   constructor(gl, options = {}) {
-    this.shader = blurShader(gl);
+    this.shader = compositeShader(gl);
     this.bufferData = faceBuffers(gl);
-    this.temp = createFramebufferTexture(gl);
 
     this.options = {};
     Object.assign(this.options, options);
   }
   draw(gl, projectionMatrix, options) {
-    useTexture(gl, this.temp);
+    const _options = {
+      now: 0,
+    };
+    Object.assign(_options, options);
     const bufferData = this.bufferData;
     const shaderProgram = this.shader;
     shaderProgram.use();
@@ -25,23 +27,12 @@ export default class Blur {
     );
     shaderProgram.uniformSet({
       projectionMatrix: projectionMatrix,
+      glowSampler: options.glowTexture,
       sampler: options.texture,
-      flipY: -1,
+      flipY: 1,
       size: [options.width, options.height],
-      dir: [1, 0],
-      width: 20,
+      time: _options.now * 0.001,
     });
     shaderProgram.draw(bufferData.indicesBufferData.length);
-    useTexture(gl, undefined);
-
-    let bool = options && options.framebufferTexture;
-    if (bool) useTexture(gl, options.framebufferTexture);
-    shaderProgram.uniformSet({
-      sampler: this.temp.texture,
-      flipY: bool ? -1 : 1,
-      dir: [0, 1],
-    });
-    shaderProgram.draw(bufferData.indicesBufferData.length);
-    if (bool) useTexture(gl, undefined);
   }
 }

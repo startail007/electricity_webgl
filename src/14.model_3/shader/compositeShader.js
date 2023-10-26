@@ -1,6 +1,6 @@
 import { initShaderProgram, attribFuns, uniformFuns, shaderProgramFun } from "../../js/glSupply";
-import vs from "./blur.vs";
-import fs from "./blur.fs";
+import vs from "./composite.vs";
+import fs from "./composite.fs";
 const shader = (gl, vs, fs) => {
   const shaderProgram = initShaderProgram(gl, vs, fs);
   const programInfo = {
@@ -12,10 +12,10 @@ const shader = (gl, vs, fs) => {
     uniformLocations: {
       projectionMatrix: uniformFuns.uniformMatrix4fv(gl, shaderProgram, "uProjectionMatrix"),
       flipY: uniformFuns.uniform1f(gl, shaderProgram, "uFlipY"),
-      sampler: uniformFuns.uniformTexture(gl, shaderProgram, "uSampler", 0),
+      glowSampler: uniformFuns.uniformTexture(gl, shaderProgram, "uGlowSampler", 0),
+      sampler: uniformFuns.uniformTexture(gl, shaderProgram, "uSampler", 1),
       size: uniformFuns.uniform2fv(gl, shaderProgram, "uSize"),
-      dir: uniformFuns.uniform2fv(gl, shaderProgram, "uDir"),
-      width: uniformFuns.uniform1f(gl, shaderProgram, "uWidth"),
+      time: uniformFuns.uniform1f(gl, shaderProgram, "uTime"), //時間
     },
   };
   return programInfo;

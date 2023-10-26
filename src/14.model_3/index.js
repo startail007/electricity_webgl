@@ -8,8 +8,9 @@ import { loadTexture, createFramebufferTexture, useTexture } from "../js/glSuppl
 import { Vector, VectorE, getQuadraticCurveInfo, getCubicCurveInfo } from "../js/vector";
 import { getTextData, getNearestDistance } from "./funs";
 import Blur from "./blur";
-
+import Composite from "./composite";
 const main = () => {
+  const fps = document.getElementById("fps");
   const canvas = document.querySelector("#glcanvas");
   const options = {
     //premultipliedAlpha: false,
@@ -36,6 +37,7 @@ const main = () => {
   text01.pos = [gl.canvas.width * 0.5 - text01.width * 0.5, gl.canvas.height * 0.5 - text01.height * 0.5];
 
   const blur01 = new Blur(gl);
+  const composite01 = new Composite(gl);
   //著色器資料
   const programInfos = {};
   //緩衝資料
@@ -55,9 +57,8 @@ const main = () => {
 
   const size = [gl.canvas.clientWidth, gl.canvas.clientHeight];
   const framebufferTextures = {
-    temp0: createFramebufferTexture(gl),
-    temp1: createFramebufferTexture(gl),
-    // text: createFramebufferTexture(gl),
+    text: createFramebufferTexture(gl),
+    blur: createFramebufferTexture(gl),
     // blurs: [createFramebufferTexture(gl), createFramebufferTexture(gl)],
   };
   canvas.addEventListener("mousemove", (ev) => {
@@ -137,15 +138,17 @@ const main = () => {
     framebufferTextures,
     size,
   });
-  let time = 0;
-  function render(now) {
+  let time = Date.now();
+  function render(t) {
+    const now = Date.now();
     const delta = (now - time) * 0.001;
+    fps.textContent = Math.round(1 / delta);
     time = now;
     //console.log(1 / delta);
     requestAnimationFrame(render);
     //console.log(mPos);
     drawScene(gl, programInfos, buffers, textures, {
-      now: now,
+      now: t,
       delta,
       mPos,
       framebufferTextures,
@@ -153,6 +156,7 @@ const main = () => {
       pList,
       text01,
       blur01,
+      composite01,
     });
   }
   requestAnimationFrame(render);
@@ -163,7 +167,7 @@ const init = (gl, programInfos, buffers, textures, datas) => {
 };
 
 const drawScene = (gl, programInfos, buffers, textures, datas) => {
-  const { now, delta, framebufferTextures, mPos, size, pList, text01, blur01 } = datas;
+  const { now, delta, framebufferTextures, mPos, size, pList, text01, blur01, composite01 } = datas;
 
   const projectionMatrix = mat4.create();
   mat4.ortho(projectionMatrix, 0, gl.canvas.clientWidth, gl.canvas.clientHeight, 0, 0.1, 100);
@@ -179,28 +183,40 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
   gl.depthFunc(gl.LEQUAL);
   //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.clear(gl.COLOR_BUFFER_BIT);
+  // {
+  //   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+  //   text01.update(delta);
+  //   text01.draw(gl, projectionMatrix);
+  // }
   {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     // text01.update(delta);
-    text01.draw(gl, projectionMatrix, { framebufferTexture: framebufferTextures.temp0 });
+    text01.draw(gl, projectionMatrix, { framebufferTexture: framebufferTextures.text });
   }
   {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     blur01.draw(gl, projectionMatrix, {
-      texture: framebufferTextures.temp0.texture,
+      texture: framebufferTextures.text.texture,
       pos: [0, 0],
       width: gl.canvas.width,
       height: gl.canvas.height,
+      framebufferTexture: framebufferTextures.blur,
     });
   }
   {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-    text01.update(delta);
-    text01.draw(gl, projectionMatrix);
+    composite01.draw(gl, projectionMatrix, {
+      glowTexture: framebufferTextures.blur.texture,
+      texture: framebufferTextures.text.texture,
+      pos: [0, 0],
+      width: gl.canvas.width,
+      height: gl.canvas.height,
+      now,
+    });
   }
+
   {
     gl.blendFunc(gl.ONE, gl.ONE);
     for (let i = 0; i < pList.length; i++) {
