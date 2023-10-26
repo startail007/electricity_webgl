@@ -32,7 +32,7 @@ export default class Blur {
       width: 20,
     });
     shaderProgram.draw(bufferData.indicesBufferData.length);
-    useTexture(gl, undefined);
+    useTexture(gl, null, false);
 
     let bool = options && options.framebufferTexture;
     if (bool) useTexture(gl, options.framebufferTexture);
@@ -42,6 +42,6 @@ export default class Blur {
       dir: [0, 1],
     });
     shaderProgram.draw(bufferData.indicesBufferData.length);
-    if (bool) useTexture(gl, undefined);
+    if (bool) useTexture(gl, null, false);
   }
 }

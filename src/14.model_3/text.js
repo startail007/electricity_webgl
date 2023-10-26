@@ -48,6 +48,6 @@ export default class Text {
       flipY: bool ? -1 : 1,
     });
     shaderProgram.draw(bufferData.indicesBufferData.length);
-    if (bool) useTexture(gl, undefined);
+    if (bool) useTexture(gl, null, false);
   }
 }

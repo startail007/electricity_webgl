@@ -9,6 +9,10 @@ import { Vector, VectorE, getQuadraticCurveInfo, getCubicCurveInfo } from "../js
 import { getTextData, getNearestDistance } from "./funs";
 import Blur from "./blur";
 import Composite from "./composite";
+import Spark from "./spark";
+import sparkShader from "./shader/sparkShader";
+import { modelBuffers } from "../js/model";
+import EasingFunctions from "../js/ease";
 const main = () => {
   const fps = document.getElementById("fps");
   const canvas = document.querySelector("#glcanvas");
@@ -39,9 +43,13 @@ const main = () => {
   const blur01 = new Blur(gl);
   const composite01 = new Composite(gl);
   //著色器資料
-  const programInfos = {};
+  const programInfos = {
+    sparkShader: sparkShader(gl),
+  };
   //緩衝資料
-  const buffers = {};
+  const buffers = {
+    model: modelBuffers(gl),
+  };
   //貼圖
   const textures = {
     noise: loadTexture(gl, noise),
@@ -61,6 +69,7 @@ const main = () => {
     blur: createFramebufferTexture(gl),
     // blurs: [createFramebufferTexture(gl), createFramebufferTexture(gl)],
   };
+  const particles = [];
   canvas.addEventListener("mousemove", (ev) => {
     VectorE.set(mPos, ev.offsetX, ev.offsetY);
     const info = getNearestDistance(Vector.sub(mPos, text01.pos), text01_posListG);
@@ -111,6 +120,22 @@ const main = () => {
     nearestInfo = info;
   });
 
+  // canvas.addEventListener("mousedown", (ev) => {
+  //   VectorE.set(mPos, ev.pageX, ev.pageY);
+  //   for (let i = 0; i < 100; i++) {
+  //     particles.push(
+  //       new Spark(
+  //         gl,
+  //         mPos,
+  //         2 + Math.random() * 14,
+  //         Math.random() * 2 * Math.PI,
+  //         0.5 + Math.random() * 0.5,
+  //         2 + 3 * Math.random()
+  //       )
+  //     );
+  //   }
+  // });
+
   // const i = 0;
   // const j = 0;
   // const p0 = Vector.add(text01_posListG[i][j], text01.pos);
@@ -157,6 +182,7 @@ const main = () => {
       text01,
       blur01,
       composite01,
+      particles,
     });
   }
   requestAnimationFrame(render);
@@ -167,7 +193,7 @@ const init = (gl, programInfos, buffers, textures, datas) => {
 };
 
 const drawScene = (gl, programInfos, buffers, textures, datas) => {
-  const { now, delta, framebufferTextures, mPos, size, pList, text01, blur01, composite01 } = datas;
+  const { now, delta, framebufferTextures, mPos, size, pList, text01, blur01, composite01, particles } = datas;
 
   const projectionMatrix = mat4.create();
   mat4.ortho(projectionMatrix, 0, gl.canvas.clientWidth, gl.canvas.clientHeight, 0, 0.1, 100);
@@ -223,6 +249,26 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       const el = pList[i];
       el.update(delta);
       el.draw(gl, projectionMatrix, { now });
+      if (el.tRate > 0.4 && el.tRate < 0.6) {
+        if (Math.random() > 0.25) {
+          const pos = el.options.pointList[0];
+          const pos0 = el.options.pointList[1];
+          const dir = Vector.sub(pos0, pos);
+          const a = Math.atan2(dir[1], dir[0]);
+          for (let j = 0; j < 2; j++) {
+            particles.push(
+              new Spark(
+                gl,
+                pos,
+                2 + Math.random() * 14,
+                a + (Math.random() - 0.5) * Math.PI,
+                0.5 + Math.random() * 0.5,
+                2 + 3 * Math.random()
+              )
+            );
+          }
+        }
+      }
     }
 
     for (let i = 0; i < pList.length; i++) {
@@ -230,6 +276,43 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       if (el.confirmRemove) {
         pList.splice(i, 1);
       }
+    }
+  }
+  {
+    const modelViewMatrix = mat4.create();
+    for (let i = 0; i < particles.length; i++) {
+      const el = particles[i];
+      el.update(delta);
+      if (el.lifespan <= 0) particles.splice(i, 1);
+    }
+    const bufferData = buffers.model;
+    const shaderProgram = programInfos.sparkShader;
+    shaderProgram.use();
+    shaderProgram.attribSet({
+      vertexPosition: bufferData.positionBufferData.buffer,
+      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
+    });
+    shaderProgram.elementSet(bufferData.indicesBufferData.buffer);
+    shaderProgram.uniformSet({
+      projectionMatrix: projectionMatrix,
+      wireframe: false,
+      gradientColorSampler: textures.gradientColor,
+    });
+    for (let i = 0; i < particles.length; i++) {
+      const el = particles[i];
+      const startPos = el.prevPos;
+      const endPos = el.pos;
+      const thickness = 5 * EasingFunctions.easeOutQuad(el.lifespan / el.maxlife);
+      const v = Vector.sub(endPos, startPos);
+      const a = Vector.getAngle(v);
+      mat4.identity(modelViewMatrix);
+      mat4.translate(modelViewMatrix, modelViewMatrix, [...Vector.mix(startPos, endPos, 0.5), 0.0]);
+      mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
+      shaderProgram.uniformSet({
+        modelViewMatrix: modelViewMatrix,
+        size: [Vector.length(v) + thickness * 2 * (1 + 4), thickness * 2 * (1 + 4)],
+      });
+      shaderProgram.draw(bufferData.indicesBufferData.length);
     }
   }
 };
