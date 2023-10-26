@@ -75,7 +75,7 @@ void main()
   float f1=fbm_abs_noise_perlin(vTextureCoord*10.,vec2(10.,10.))*.5+.5;
   vec4 glowColor = texture2D(uGlowSampler,vTextureCoord);
   vec4 color = texture2D(uSampler,vTextureCoord);
-  vec4 outColor = 0.5*(cos(f*40.+uTime*0.1)+1.)*vec4(diff.rgb,1.)*vec4(0.4,0.5,1.,1.);
+  vec4 outColor = 0.5*(cos(f*40.+uTime*0.1)+1.)*vec4(diff.rgb,1.)*vec4(0.4,0.7,1.,1.);
   float f0 =pow((glowColor.r + glowColor.g + glowColor.b)/3.,0.5);
   vec4 _glowColor = glowColor*((1.-f0)*vec4(0.3,0.8,0.9,1.)+f0*vec4(0.8,0.8,1.,1.));
   //gl_FragColor = color+outColor+_glowColor;
@@ -86,5 +86,5 @@ void main()
   float a = (diff0.r + diff0.g + diff0.b)/3.;
   float f2=fbm_noise_perlin(vTextureCoord*30.+vec2(0.,-30.*fract(uTime*0.05)*(0.5+_glowColor.r*0.5)),vec2(30.,30.))*.5+.5;
   gl_FragColor = color+outColor+_glowColor*f2*3.;
-  // gl_FragColor = outColor;
+  //gl_FragColor = 2.*outColor;
 }

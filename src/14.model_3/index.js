@@ -32,12 +32,12 @@ const main = () => {
     alert("無法初始化WebGL。您的瀏覽器或機器可能不支持它。");
     return;
   }
-
-  const { posListG, normalListG } = getTextData("POWER", "bold 120px Courier New");
+  const textStr = "POWER";
+  const { posListG, normalListG } = getTextData(textStr, "bold 120px Courier New");
   const text01_posListG = posListG;
   const text01_normalListG = normalListG;
   const text01 = new Text(gl);
-  text01.setText(gl, "POWER", "bold 120px Courier New");
+  text01.setText(gl, textStr, "bold 120px Courier New");
   text01.pos = [gl.canvas.width * 0.5 - text01.width * 0.5, gl.canvas.height * 0.5 - text01.height * 0.5];
 
   const blur01 = new Blur(gl);
@@ -279,6 +279,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
     }
   }
   {
+    gl.blendFunc(gl.ONE, gl.ONE);
     const modelViewMatrix = mat4.create();
     for (let i = 0; i < particles.length; i++) {
       const el = particles[i];
