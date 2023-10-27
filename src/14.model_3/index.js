@@ -11,8 +11,10 @@ import Blur from "./blur";
 import Composite from "./composite";
 import Spark from "./spark";
 import sparkShader from "./shader/sparkShader";
-import { modelBuffers } from "../js/model";
-import EasingFunctions from "../js/ease";
+import blurShader from "./shader/blurShader";
+import compositeShader from "./shader/compositeShader";
+import electricityModelShader from "./shader/electricityModelShader";
+import { modelBuffers, faceBuffers } from "../js/model";
 const main = () => {
   const fps = document.getElementById("fps");
   const canvas = document.querySelector("#glcanvas");
@@ -32,6 +34,26 @@ const main = () => {
     alert("無法初始化WebGL。您的瀏覽器或機器可能不支持它。");
     return;
   }
+
+  //著色器資料
+  const programInfos = {
+    sparkShader: sparkShader(gl),
+    blurShader: blurShader(gl),
+    compositeShader: compositeShader(gl),
+    electricityModelShader: electricityModelShader(gl),
+  };
+  //緩衝資料
+  const buffers = {
+    model: modelBuffers(gl),
+    face: faceBuffers(gl),
+  };
+  //貼圖
+  const textures = {
+    noise: loadTexture(gl, noise),
+    gradientColor: loadTexture(gl, gradientColor),
+    thicknessScale: loadTexture(gl, thicknessScale),
+  };
+
   const textStr = "POWER";
   const { posListG, normalListG } = getTextData(textStr, "bold 120px Courier New");
   const text01_posListG = posListG;
@@ -40,22 +62,14 @@ const main = () => {
   text01.setText(gl, textStr, "bold 120px Courier New");
   text01.pos = [gl.canvas.width * 0.5 - text01.width * 0.5, gl.canvas.height * 0.5 - text01.height * 0.5];
 
-  const blur01 = new Blur(gl);
-  const composite01 = new Composite(gl);
-  //著色器資料
-  const programInfos = {
-    sparkShader: sparkShader(gl),
-  };
-  //緩衝資料
-  const buffers = {
-    model: modelBuffers(gl),
-  };
-  //貼圖
-  const textures = {
-    noise: loadTexture(gl, noise),
-    gradientColor: loadTexture(gl, gradientColor),
-    thicknessScale: loadTexture(gl, thicknessScale),
-  };
+  const blur01 = new Blur(gl, {
+    bufferData: buffers.face,
+    shader: programInfos.blurShader,
+  });
+  const composite01 = new Composite(gl, {
+    bufferData: buffers.face,
+    shader: programInfos.compositeShader,
+  });
   //滑鼠位置
   // const mPos = [gl.canvas.width * 0.5, gl.canvas.height * 0.5];
   const mPos = [0, 0];
@@ -95,6 +109,7 @@ const main = () => {
             gradientColor: textures.gradientColor,
             thicknessScale: textures.thicknessScale,
           },
+          shader: programInfos.electricityModelShader,
         });
         electricity.onUpdate((el, delta) => {
           const [p0, p1, p2] = el.options.pointList;
@@ -120,21 +135,25 @@ const main = () => {
     nearestInfo = info;
   });
 
-  // canvas.addEventListener("mousedown", (ev) => {
-  //   VectorE.set(mPos, ev.pageX, ev.pageY);
-  //   for (let i = 0; i < 100; i++) {
-  //     particles.push(
-  //       new Spark(
-  //         gl,
-  //         mPos,
-  //         2 + Math.random() * 14,
-  //         Math.random() * 2 * Math.PI,
-  //         0.5 + Math.random() * 0.5,
-  //         2 + 3 * Math.random()
-  //       )
-  //     );
-  //   }
-  // });
+  canvas.addEventListener("mousedown", (ev) => {
+    VectorE.set(mPos, ev.pageX, ev.pageY);
+    for (let i = 0; i < 100; i++) {
+      particles.push(
+        new Spark(gl, {
+          pos: mPos,
+          velocity: 2 + Math.random() * 12,
+          direct: Math.random() * 2 * Math.PI,
+          lifespan: 0.3 + Math.random() * 0.3,
+          thickness: 4 + 3 * Math.random(),
+          bufferData: buffers.model,
+          shader: programInfos.sparkShader,
+          textures: {
+            gradientColor: textures.gradientColor,
+          },
+        })
+      );
+    }
+  });
 
   // const i = 0;
   // const j = 0;
@@ -183,6 +202,8 @@ const main = () => {
       blur01,
       composite01,
       particles,
+      text01_posListG,
+      text01_normalListG,
     });
   }
   requestAnimationFrame(render);
@@ -193,7 +214,20 @@ const init = (gl, programInfos, buffers, textures, datas) => {
 };
 
 const drawScene = (gl, programInfos, buffers, textures, datas) => {
-  const { now, delta, framebufferTextures, mPos, size, pList, text01, blur01, composite01, particles } = datas;
+  const {
+    now,
+    delta,
+    framebufferTextures,
+    mPos,
+    size,
+    pList,
+    text01,
+    blur01,
+    composite01,
+    particles,
+    text01_posListG,
+    text01_normalListG,
+  } = datas;
 
   const projectionMatrix = mat4.create();
   mat4.ortho(projectionMatrix, 0, gl.canvas.clientWidth, gl.canvas.clientHeight, 0, 0.1, 100);
@@ -215,6 +249,27 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
   //   text01.update(delta);
   //   text01.draw(gl, projectionMatrix);
   // }
+
+  if (Math.random() > 0.8) {
+    const ii = Math.floor(Math.random() * text01_posListG.length);
+    const jj = Math.floor(Math.random() * text01_posListG[ii].length);
+    for (let i = 0; i < Math.random() * 2 + 1; i++) {
+      particles.push(
+        new Spark(gl, {
+          pos: Vector.add(text01_posListG[ii][jj], text01.pos),
+          velocity: 2 + Math.random() * 5,
+          direct: Vector.getAngle(text01_normalListG[ii][jj]) + 0.1 * (Math.random() - 0.5) * Math.PI,
+          lifespan: 0.3 + Math.random() * 0.3,
+          thickness: 4 + 3 * Math.random(),
+          bufferData: buffers.model,
+          shader: programInfos.sparkShader,
+          textures: {
+            gradientColor: textures.gradientColor,
+          },
+        })
+      );
+    }
+  }
   {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -257,14 +312,18 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
           const a = Math.atan2(dir[1], dir[0]);
           for (let j = 0; j < 2; j++) {
             particles.push(
-              new Spark(
-                gl,
-                pos,
-                2 + Math.random() * 14,
-                a + (Math.random() - 0.5) * Math.PI,
-                0.5 + Math.random() * 0.5,
-                2 + 3 * Math.random()
-              )
+              new Spark(gl, {
+                pos: pos,
+                velocity: 2 + Math.random() * 12,
+                direct: a + (Math.random() - 0.5) * Math.PI,
+                lifespan: 0.3 + Math.random() * 0.3,
+                thickness: 4 + 3 * Math.random(),
+                bufferData: buffers.model,
+                shader: programInfos.sparkShader,
+                textures: {
+                  gradientColor: textures.gradientColor,
+                },
+              })
             );
           }
         }
@@ -280,40 +339,15 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
   }
   {
     gl.blendFunc(gl.ONE, gl.ONE);
-    const modelViewMatrix = mat4.create();
     for (let i = 0; i < particles.length; i++) {
       const el = particles[i];
       el.update(delta);
-      if (el.lifespan <= 0) particles.splice(i, 1);
+      if (el.lifeRate <= 0) particles.splice(i, 1);
     }
-    const bufferData = buffers.model;
-    const shaderProgram = programInfos.sparkShader;
-    shaderProgram.use();
-    shaderProgram.attribSet({
-      vertexPosition: bufferData.positionBufferData.buffer,
-      textureCoord: bufferData.textureCoordinatesBufferData.buffer,
-    });
-    shaderProgram.elementSet(bufferData.indicesBufferData.buffer);
-    shaderProgram.uniformSet({
-      projectionMatrix: projectionMatrix,
-      wireframe: false,
-      gradientColorSampler: textures.gradientColor,
-    });
+
     for (let i = 0; i < particles.length; i++) {
       const el = particles[i];
-      const startPos = el.prevPos;
-      const endPos = el.pos;
-      const thickness = 5 * EasingFunctions.easeOutQuad(el.lifespan / el.maxlife);
-      const v = Vector.sub(endPos, startPos);
-      const a = Vector.getAngle(v);
-      mat4.identity(modelViewMatrix);
-      mat4.translate(modelViewMatrix, modelViewMatrix, [...Vector.mix(startPos, endPos, 0.5), 0.0]);
-      mat4.rotateZ(modelViewMatrix, modelViewMatrix, a);
-      shaderProgram.uniformSet({
-        modelViewMatrix: modelViewMatrix,
-        size: [Vector.length(v) + thickness * 2 * (1 + 4), thickness * 2 * (1 + 4)],
-      });
-      shaderProgram.draw(bufferData.indicesBufferData.length);
+      el.draw(gl, projectionMatrix);
     }
   }
 };

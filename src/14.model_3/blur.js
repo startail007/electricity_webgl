@@ -1,11 +1,8 @@
-import { faceBuffers } from "../js/model";
 import blurShader from "./shader/blurShader";
 import { Vector } from "../js/vector";
 import { loadTexture, getViewData0, useTexture, createFramebufferTexture } from "../js/glSupply";
 export default class Blur {
   constructor(gl, options = {}) {
-    this.shader = blurShader(gl);
-    this.bufferData = faceBuffers(gl);
     this.temp = createFramebufferTexture(gl);
 
     this.options = {};
@@ -13,8 +10,8 @@ export default class Blur {
   }
   draw(gl, projectionMatrix, options) {
     useTexture(gl, this.temp);
-    const bufferData = this.bufferData;
-    const shaderProgram = this.shader;
+    const bufferData = this.options.bufferData;
+    const shaderProgram = this.options.shader;
     shaderProgram.use();
     shaderProgram.attribSet({
       vertexPosition: bufferData.positionBufferData.buffer,

@@ -1,12 +1,7 @@
-import { faceBuffers } from "../js/model";
-import compositeShader from "./shader/compositeShader";
 import { Vector } from "../js/vector";
 import { loadTexture, getViewData0, useTexture, createFramebufferTexture } from "../js/glSupply";
 export default class Composite {
   constructor(gl, options = {}) {
-    this.shader = compositeShader(gl);
-    this.bufferData = faceBuffers(gl);
-
     this.options = {};
     Object.assign(this.options, options);
   }
@@ -15,8 +10,8 @@ export default class Composite {
       now: 0,
     };
     Object.assign(_options, options);
-    const bufferData = this.bufferData;
-    const shaderProgram = this.shader;
+    const bufferData = this.options.bufferData;
+    const shaderProgram = this.options.shader;
     shaderProgram.use();
     shaderProgram.attribSet({
       vertexPosition: bufferData.positionBufferData.buffer,

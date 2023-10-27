@@ -1,10 +1,8 @@
 import { infoModelBuffers } from "../js/model";
-import electricityModelShader from "./shader/electricityModelShader";
 import { lineInterpolation } from "../js/base";
 import { VectorE } from "../js/vector";
 export default class Electricity {
   constructor(gl, curveInfo, options = {}) {
-    this.shader = electricityModelShader(gl);
     this.curveInfo = curveInfo;
     this.fun = null;
     this.id = Date.now() + "_" + Math.floor(Math.random() * 100000);
@@ -105,7 +103,7 @@ export default class Electricity {
     };
     Object.assign(_options, options);
     const { textures, expand, randomSeed, thickness, borderPower, density, sub, radius, power } = this.options;
-    const shaderProgram = this.shader;
+    const shaderProgram = this.options.shader;
     shaderProgram.use();
     const { bufferData, length } = this.getBufferData(gl);
     shaderProgram.attribSet({

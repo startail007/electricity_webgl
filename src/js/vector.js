@@ -1,5 +1,11 @@
 import { Float } from "./float";
 export class Vector {
+  static zero() {
+    return [0, 0];
+  }
+  static clone(vector) {
+    return [...vector];
+  }
   static normalize(vector) {
     const len = Vector.length(vector);
     if (len) {
