@@ -89,16 +89,16 @@ const main = () => {
     const info = getNearestDistance(Vector.sub(mPos, text01.pos), text01_posListG);
     //const len = Vector.distance(mPos, [400, 300]);
     if (info.r >= 200 || (nearestInfo && info.i !== nearestInfo.i)) {
-      const list = pList.filter((el) => el.group === "my" && !el.removeState);
+      const list = pList.filter((el) => el.group === "main" && !el.removeState);
       list.forEach((el) => {
         el.remove();
       });
     } else if (info.r <= 150) {
       VectorE.set(nearestPos, ...Vector.add(text01_posListG[info.i][info.j], text01.pos));
-      const list = pList.filter((el) => el.group === "my" && !el.removeState);
+      const list = pList.filter((el) => el.group === "main" && !el.removeState);
       if (list.length <= 0) {
         const electricity = new Electricity(gl, getQuadraticCurveInfo, {
-          group: "my",
+          group: "main",
           t: 0,
           tMax: 1.5,
           flow: true,
@@ -155,28 +155,56 @@ const main = () => {
     }
   });
 
-  // const i = 0;
-  // const j = 0;
-  // const p0 = Vector.add(text01_posListG[i][j], text01.pos);
-  // const p3 = Vector.add(text01_posListG[i][j + 50], text01.pos);
-  // const p1 = Vector.add(p0, Vector.scale(text01_normalListG[i][j + 25], 20));
-  // const p2 = Vector.add(p3, Vector.scale(text01_normalListG[i][j + 25], 20));
-  // const electricity = new Electricity(gl, getCubicCurveInfo, {
-  //   pointList: [p0, p1, p2, p3],
-  //   density: [1, 1],
-  //   thickness: [3, 3],
-  //   borderPower: [6, 6],
-  //   expand: 40,
-  //   sub: false,
-  //   radius: [20, 20],
-  //   n: 40,
-  //   textures: {
-  //     noise: textures.noise,
-  //     gradientColor: textures.gradientColor,
-  //     thicknessScale: textures.thicknessScale,
-  //   },
-  // });
-  // pList.push(electricity);
+  const getRandomTextPos = () => {
+    const ii = Math.floor(Math.random() * text01_posListG.length);
+    const jj = Math.floor(Math.random() * text01_posListG[ii].length);
+    return [ii, jj];
+  };
+  const addNinor = () => {
+    const [ii0, jj0] = getRandomTextPos();
+    const [ii1, jj1] = getRandomTextPos();
+    const p0 = Vector.add(text01_posListG[ii0][jj0], text01.pos);
+    const p3 = Vector.add(text01_posListG[ii1][jj1], text01.pos);
+    const len = Vector.distance(p0, p3);
+    if (len > 20 && len < 140) {
+      const p1 = Vector.add(Vector.mix(p0, p3, 0.25), Vector.scale(text01_normalListG[ii0][jj0], len * 0.1));
+      const p2 = Vector.add(Vector.mix(p0, p3, 0.75), Vector.scale(text01_normalListG[ii1][jj1], len * 0.1));
+      const electricity = new Electricity(gl, getCubicCurveInfo, {
+        group: "minor",
+        pointList: [p0, p1, p2, p3],
+        density: [0.6, 0.6],
+        thickness: [6, 6],
+        borderPower: [2, 2],
+        expand: 60,
+        sub: true,
+        radius: [30, 30],
+        n: 80,
+        t: 0,
+        tMax: len / 100,
+        flow: true,
+        textures: {
+          noise: textures.noise,
+          gradientColor: textures.gradientColor,
+          thicknessScale: textures.thicknessScale,
+        },
+        shader: programInfos.electricityModelShader,
+      });
+      electricity.onUpdate((el, delta) => {
+        if (el.tRate >= 0.5) {
+          el.remove();
+        }
+      });
+      pList.push(electricity);
+      return { electricity, normal0: text01_normalListG[ii0][jj0], normal1: text01_normalListG[ii1][jj1] };
+    }
+  };
+  // let count = 0;
+  // while (count < 4) {
+  //   const bool = addNinor();
+  //   if (bool) {
+  //     count++;
+  //   }
+  // }
 
   init(gl, programInfos, buffers, textures, {
     framebufferTextures,
@@ -204,6 +232,7 @@ const main = () => {
       particles,
       text01_posListG,
       text01_normalListG,
+      addNinor,
     });
   }
   requestAnimationFrame(render);
@@ -227,6 +256,7 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
     particles,
     text01_posListG,
     text01_normalListG,
+    addNinor,
   } = datas;
 
   const projectionMatrix = mat4.create();
@@ -270,6 +300,46 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       );
     }
   }
+  if (Math.random() > 0.9) {
+    const info = addNinor();
+    if (info) {
+      const { electricity, normal0, normal1 } = info;
+      const [p0, p1, p2, p3] = electricity.options.pointList;
+      //console.log(p0, p1, p2, p3);
+      for (let i = 0; i < Math.random() * 2 + 2; i++) {
+        particles.push(
+          new Spark(gl, {
+            pos: p0,
+            velocity: 2 + Math.random() * 5,
+            direct: Vector.getAngle(normal0) + 0.5 * (Math.random() - 0.5) * Math.PI,
+            lifespan: 0.5 + Math.random() * 0.5,
+            thickness: 4 + 3 * Math.random(),
+            bufferData: buffers.model,
+            shader: programInfos.sparkShader,
+            textures: {
+              gradientColor: textures.gradientColor,
+            },
+          })
+        );
+      }
+      for (let i = 0; i < Math.random() * 2 + 2; i++) {
+        particles.push(
+          new Spark(gl, {
+            pos: p3,
+            velocity: 2 + Math.random() * 5,
+            direct: Vector.getAngle(normal1) + 0.5 * (Math.random() - 0.5) * Math.PI,
+            lifespan: 0.5 + Math.random() * 0.5,
+            thickness: 4 + 3 * Math.random(),
+            bufferData: buffers.model,
+            shader: programInfos.sparkShader,
+            textures: {
+              gradientColor: textures.gradientColor,
+            },
+          })
+        );
+      }
+    }
+  }
   {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -304,27 +374,29 @@ const drawScene = (gl, programInfos, buffers, textures, datas) => {
       const el = pList[i];
       el.update(delta);
       el.draw(gl, projectionMatrix, { now });
-      if (el.tRate > 0.4 && el.tRate < 0.6) {
-        if (Math.random() > 0.25) {
-          const pos = el.options.pointList[0];
-          const pos0 = el.options.pointList[1];
-          const dir = Vector.sub(pos0, pos);
-          const a = Math.atan2(dir[1], dir[0]);
-          for (let j = 0; j < 2; j++) {
-            particles.push(
-              new Spark(gl, {
-                pos: pos,
-                velocity: 2 + Math.random() * 12,
-                direct: a + (Math.random() - 0.5) * Math.PI,
-                lifespan: 0.3 + Math.random() * 0.3,
-                thickness: 4 + 3 * Math.random(),
-                bufferData: buffers.model,
-                shader: programInfos.sparkShader,
-                textures: {
-                  gradientColor: textures.gradientColor,
-                },
-              })
-            );
+      if (el.group == "main") {
+        if (el.tRate > 0.4 && el.tRate < 0.6) {
+          if (Math.random() > 0.25) {
+            const pos = el.options.pointList[0];
+            const pos0 = el.options.pointList[1];
+            const dir = Vector.sub(pos0, pos);
+            const a = Math.atan2(dir[1], dir[0]);
+            for (let j = 0; j < 2; j++) {
+              particles.push(
+                new Spark(gl, {
+                  pos: pos,
+                  velocity: 2 + Math.random() * 12,
+                  direct: a + (Math.random() - 0.5) * Math.PI,
+                  lifespan: 0.3 + Math.random() * 0.3,
+                  thickness: 4 + 3 * Math.random(),
+                  bufferData: buffers.model,
+                  shader: programInfos.sparkShader,
+                  textures: {
+                    gradientColor: textures.gradientColor,
+                  },
+                })
+              );
+            }
           }
         }
       }
